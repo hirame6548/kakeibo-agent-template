@@ -1,0 +1,219 @@
+{
+  "tables": {
+    "transactions": [
+      "id",
+      "source",
+      "card",
+      "used_at",
+      "merchant_raw",
+      "merchant_key",
+      "amount_jpy",
+      "amount_foreign",
+      "currency",
+      "category",
+      "description",
+      "parent_id",
+      "detail_msg_id",
+      "match_status",
+      "candidate_msg_ids",
+      "evidence",
+      "input_version",
+      "confidence",
+      "classified_by",
+      "status",
+      "csv_status",
+      "created_at",
+      "updated_at"
+    ],
+    "rules": [
+      "merchant_key",
+      "category",
+      "needs_detail",
+      "source",
+      "hits",
+      "updated_at"
+    ],
+    "assets": [
+      "month",
+      "account",
+      "balance",
+      "entered_at"
+    ],
+    "csv13_families": [
+      "key",
+      "card",
+      "billing_month",
+      "snapshots",
+      "summary"
+    ],
+    "csv13_rows": [
+      "family_key",
+      "entry"
+    ],
+    "csv13_runs": [
+      "run_id",
+      "part",
+      "input"
+    ],
+    "csv_imports": [
+      "id",
+      "card",
+      "billing_month",
+      "period_start",
+      "period_end",
+      "row_count",
+      "billed_total",
+      "reported_total",
+      "created_at"
+    ],
+    "csv_bills": [
+      "id",
+      "import_id",
+      "card",
+      "billing_month",
+      "row_number",
+      "used_at",
+      "merchant_raw",
+      "amount_jpy",
+      "payment_total_raw",
+      "payment_index_raw",
+      "billed_jpy",
+      "memo",
+      "foreign_note",
+      "purchase_id",
+      "status",
+      "reason",
+      "candidate_purchase_ids"
+    ],
+    "mail_exchange_log": [
+      "run_id",
+      "at",
+      "report"
+    ],
+    "mail_sources": [
+      "id",
+      "mailbox",
+      "message_id",
+      "item_ordinal",
+      "digest",
+      "kind",
+      "event_status",
+      "purchase_id",
+      "candidate_purchase_ids",
+      "reason"
+    ],
+    "results_log": [
+      "run_id",
+      "digest",
+      "applied_at",
+      "accepted",
+      "review",
+      "stale",
+      "skipped"
+    ],
+    "ui_history": [
+      "id",
+      "entry"
+    ],
+    "ui_requests": [
+      "id",
+      "digest",
+      "revision",
+      "at"
+    ],
+    "config": [
+      "key",
+      "value"
+    ]
+  },
+  "optional": [
+    "csv13_rows",
+    "csv13_families",
+    "csv13_runs",
+    "csv_imports",
+    "csv_bills",
+    "results_log",
+    "mail_sources",
+    "mail_exchange_log"
+  ],
+  "raw_input": {
+    "schema_version": 1,
+    "provenance": "gmail_api_raw",
+    "messages": "array: mailbox,message_id,raw_base64url; optional received_at_utc,rfc2822_sha256,rfc2822_bytes"
+  },
+  "exchange": {
+    "schema_version": "1 without details; 2 REQUIRED with details",
+    "run_id": "16..100 [-a-zA-Z0-9_]",
+    "generated_at": "ISO8601 UTC fixed across phases",
+    "mail_batch": "code-generated parsed messages",
+    "classification_file": "optional provisional results",
+    "billing_notices": "optional notice array",
+    "required_capability": "purchase-details-v5-fullrow-verified-readback for details",
+    "details_file": "optional schema1 purchase_details results",
+    "details_source_records": "required with details: derived from trusted --sources raw; mailbox,message_id,raw_sha256,verification_method,sender"
+  },
+  "cells": "Header plain field names; nonempty data cells JSON strings; retain every dynamic column.",
+  "details_file": {
+    "schema_version": 1,
+    "mode": "purchase_details",
+    "run_id": "unique immutable run",
+    "results_fields": [
+      "id",
+      "input_version",
+      "match_status",
+      "search_performed",
+      "description",
+      "evidence",
+      "source_mailbox",
+      "source_message_ids",
+      "source_facts"
+    ],
+    "match_status": [
+      "matched",
+      "ambiguous",
+      "no_candidate",
+      "not_searched"
+    ],
+    "source_facts_fields": [
+      "date",
+      "date_kind",
+      "amount",
+      "currency"
+    ],
+    "stored_extension": "transactions.purchase_details",
+    "legacy_fields_unchanged": true,
+    "pending_coverage": "all non-owner-protected leaf rows lacking saved additive detail; legacy evidence exposed for audit, never overwritten"
+  },
+  "bundle_version": "kakeibo-developer-preview-v3-unreleased",
+  "source_input": {
+    "same_raw_envelope_as": "raw_input",
+    "cli": "--sources + --source-senders exact sender JSON allowlist",
+    "trust": "connector-owned raw records separate from LLM results; header validation is not cryptographic provenance"
+  },
+  "capability_gate": {
+    "snapshot_path": "state.mail_exchange_log[].report.capabilities",
+    "required": {
+      "purchase_details": "purchase-details-v5-fullrow-verified-readback",
+      "execution_path": "head_pull",
+      "exchange_schema_versions": "array containing numeric 2"
+    },
+    "future_allowed": false,
+    "required_report_execution_status": "succeeded",
+    "matching_report_run_id": true,
+    "reject_error_markers": [
+      "error",
+      "failed",
+      "ok=false"
+    ],
+    "age_expiry": null,
+    "history_does_not_guarantee_current_head": true
+  },
+  "details_run_registry": "mail_exchange_log[].report.details.{run_id,input_digest,outcomes}; full report required",
+  "confirmation": {
+    "command": "cloud_entry.py confirm --after full-post-snapshot --expected unmodified-validate-output --output new-file",
+    "output": "complete,transport_confirmed,unapplied_ids,reasons; exit2 unless complete",
+    "required": "successful matching HEAD receipt + details run/digest/expected outcomes + stored details entries + financial/IDs/owner invariants",
+    "expectations_schema_version": 2,
+    "fullrow_protection": "every expected row; protected rows exact, eligible changes explicit; only actual commit clocks normalized"
+  }
+}

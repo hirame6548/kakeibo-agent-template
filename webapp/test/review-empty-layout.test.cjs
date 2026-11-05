@@ -1,0 +1,4 @@
+const test=require('node:test'),a=require('node:assert/strict'),fs=require('node:fs');
+const html=fs.readFileSync(require.resolve('../Index.html'),'utf8');
+test('empty state explicitly has one minmax column and clears done placement',()=>{a.match(html,/\.review-empty\{[^}]*grid-template-columns:minmax\(0,1fr\)/);a.match(html,/\.review-empty>\.done-card\{grid-area:auto\}/);a.ok(html.indexOf('.review-empty>.done-card')>html.indexOf('.done-card{grid-area:done}'));});
+test('normal review desktop named areas and mobile vertical layout remain',()=>{a.match(html,/grid-template-areas:"progress card" "done card"/);a.match(html,/@media \(max-width:760px\)/);a.match(html,/\.review-layout\{display:flex;flex-direction:column;gap:14px\}/);a.match(html,/class="review-empty"><section class="card complete-card"/);a.match(html,/\$\{doneHTML\}<\/div>/);});

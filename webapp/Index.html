@@ -1,0 +1,1610 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="format-detection" content="telephone=no">
+<title>家計簿</title>
+<style>
+:root{
+  --bg:#fff; --paper:#fff; --ink:#1f2d29; --muted:#5b6862; --line:#dde1df; --line-soft:#eceeed;
+  --accent:#2c6450; --accent-dark:#214c3d; --accent-soft:#e7f0ea;
+  --warn:#93540e; --warn-soft:#fbf0dd; --warn-line:#ead0a2; --error:#a3361f;
+  --big:#4f3f86; --big-soft:#eeeaf7;
+  --radius:18px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.6;
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif;
+  -webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0;-webkit-tap-highlight-color:transparent}
+a{color:var(--accent);-webkit-tap-highlight-color:transparent}
+h1,h2,h3,p,ul,dl,dd,figure{margin:0}
+ul{padding:0;list-style:none}
+[hidden]{display:none!important}
+:focus-visible{outline:3px solid #b07a22;outline-offset:3px}
+[tabindex="-1"]:focus{outline:none}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.is-bad{color:var(--warn)}
+.is-good{color:var(--accent)}
+.is-flat{color:var(--muted)}
+.icon{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* 枠のアイコン（形と色で見分ける。色の面に白い形） */
+.frame-icon{display:inline-grid;place-items:center;width:32px;height:32px;flex:none;border-radius:10px;background:var(--c);color:#fff}
+.frame-icon .icon{width:19px;height:19px;stroke-width:1.9}
+.frame-icon.is-pending{background:#fff;color:var(--c);border:1.5px dashed var(--c)}
+.frame-icon.is-small{width:24px;height:24px;border-radius:7px}
+.frame-icon.is-small .icon{width:15px;height:15px}
+
+/* 枠組み */
+.shell{max-width:1120px;margin:0 auto;padding:0 32px}
+.masthead .shell{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:78px}
+.brand{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:700;letter-spacing:.08em}
+.brand-mark{width:32px;height:32px;border-radius:10px;background:var(--accent);color:#fff;display:grid;place-items:center}
+.brand-mark .icon{width:19px;height:19px}
+.nav{display:flex;gap:6px}
+.nav a{position:relative;display:flex;align-items:center;gap:8px;min-height:46px;padding:8px 16px;border-radius:12px;color:var(--muted);font-weight:600;text-decoration:none}
+.nav a:hover{background:#f1f3f2}
+.nav a[aria-current="page"]{background:var(--accent-soft);color:var(--accent)}
+.badge{display:inline-flex;align-items:center;justify-content:center;min-width:21px;height:21px;padding:0 6px;border-radius:11px;background:var(--warn);color:#fff;font-size:12px;font-weight:700;line-height:1}
+.banner{background:var(--warn-soft);border-top:1px solid var(--warn-line);border-bottom:1px solid var(--warn-line);color:var(--warn);font-size:14px;padding:10px 0}
+main{padding:12px 0 36px}
+.page-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:10px 0 22px}
+h1{font-size:28px;line-height:1.35;letter-spacing:.02em}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius)}
+.card-label{font-size:14px;font-weight:600;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:10px 22px;border-radius:12px;background:var(--accent);color:#fff;font-weight:700;text-decoration:none;line-height:1.4}
+.button:hover:not(:disabled){background:var(--accent-dark)}
+.button:disabled{opacity:.42;cursor:default}
+.button.secondary{background:#fff;color:var(--accent);border:1px solid #c3d2c6}
+.button.secondary:hover:not(:disabled){background:var(--accent-soft)}
+.button.wide{width:100%}
+.button.compact{min-height:44px;padding:6px 14px;font-size:14px}
+.text-link{display:inline-flex;align-items:center;min-height:44px;color:var(--accent);font-weight:700;text-decoration:none}
+.text-link:hover{text-decoration:underline;text-underline-offset:4px}
+.tag{display:inline-block;padding:0 7px;border-radius:6px;background:#edf0eb;color:var(--muted);font-size:11px;font-weight:700;line-height:1.75;white-space:nowrap}
+.tag.is-warn{background:var(--warn-soft);color:var(--warn)}
+.tag.is-big{background:var(--big-soft);color:var(--big)}
+.empty-note{padding:16px 0;color:var(--muted);font-size:14px}
+.footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 16px;padding-top:18px;padding-bottom:28px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}
+.footer button{min-height:44px;color:var(--muted);text-decoration:underline;text-underline-offset:3px;font-size:12px}
+
+/* 今月の内訳 */
+.month-switch{display:flex;align-items:center;gap:2px;padding:2px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.month-current{min-width:8em;text-align:center;font-weight:700}
+.icon-button{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px}
+.icon-button:hover:not(:disabled){background:var(--accent-soft)}
+.icon-button:disabled{opacity:.3;cursor:default}
+.top-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:18px;margin-bottom:22px}
+.spend-card{padding:26px 28px}
+.big{font-size:42px;font-weight:700;line-height:1.2;letter-spacing:-.01em;margin:10px 0 10px;white-space:nowrap}
+.compare{display:flex;flex-wrap:wrap;gap:2px 14px;font-size:14px}
+.compare strong{font-weight:700}
+.spend-card .note{margin-top:8px;font-size:13px;color:var(--muted)}
+.asset-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 16px;padding:24px 26px;color:inherit;text-decoration:none}
+.asset-card:hover{border-color:#bfd0c3}
+.asset-text{display:flex;flex-direction:column;gap:4px;min-width:0}
+.asset-total{font-size:30px;font-weight:700;line-height:1.25;white-space:nowrap}
+.asset-sub{font-size:14px}
+.mini-chart{display:block;width:132px;height:56px;align-self:center}
+.asset-card .more{grid-column:1/-1;display:flex;align-items:center;gap:4px;color:var(--accent);font-weight:700;font-size:14px;margin-top:6px}
+.asset-card .more .icon{width:16px;height:16px}
+.cat-card{overflow:hidden}
+.cat-card h2{font-size:18px;padding:20px 24px 14px}
+.cat-cols,.cat-row{display:grid;grid-template-columns:minmax(0,1fr) 112px 120px 20px;gap:12px;align-items:center}
+.cat-cols{padding:8px 24px;font-size:12px;color:var(--muted);background:#f7f8f8;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.cat-cols span:nth-child(2),.cat-cols span:nth-child(3){text-align:right}
+.cat-item+.cat-item{border-top:1px solid var(--line-soft)}
+.cat-row{width:100%;min-height:62px;padding:9px 24px;text-align:left}
+button.cat-row:hover{background:#f7f8f8}
+.cat-name{display:flex;align-items:center;gap:12px;min-width:0}
+.cat-stack{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1}
+.cat-title{display:flex;align-items:center;flex-wrap:wrap;gap:2px 6px}
+.cat-label{font-weight:600;word-break:keep-all}
+.cat-meta{font-size:12px;color:var(--muted)}
+.bar{display:block;height:4px;border-radius:2px;background:#eceeed;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:2px;background:var(--c);opacity:.8}
+.cat-amount{text-align:right;font-weight:700}
+.cat-diff{text-align:right;font-size:13px}
+.cat-row>.icon{width:18px;height:18px;color:#7d8d84;transition:transform .15s}
+.cat-row[aria-expanded="true"]>.icon{transform:rotate(180deg)}
+.cat-item.is-empty .cat-row{color:var(--muted)}
+.cat-item.is-empty .cat-label,.cat-item.is-empty .cat-amount{font-weight:400}
+.cat-item.is-pending .cat-label{color:var(--warn)}
+.cat-panel{padding:4px 24px 14px;background:#fafafa;border-top:1px solid var(--line-soft)}
+.cat-compare{padding:10px 0 2px;font-size:13px;color:var(--muted)}
+.tx-list{margin:6px 0 4px;border-left:2px solid var(--line)}
+.tx+.tx{border-top:1px dashed var(--line)}
+.tx-row{display:block;width:100%;min-height:52px;padding:10px 4px 10px 14px;text-align:left}
+.tx-row:hover{background:#f4f5f5}
+.tx-line{display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:600}
+.tx-merchant{display:flex;align-items:center;flex-wrap:wrap;gap:2px 8px;min-width:0;overflow-wrap:anywhere}
+.tx-end{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.tx-end .icon{width:16px;height:16px;color:#7d8d84;transition:transform .15s}
+.tx-row[aria-expanded="true"] .tx-end .icon{transform:rotate(180deg)}
+.tx-sub{display:block;font-size:13px;color:var(--muted)}
+.tx-detail{margin:0 4px 12px 14px;padding:12px 16px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.tx-detail dl{display:grid;grid-template-columns:6.5em minmax(0,1fr);gap:4px 12px;font-size:13px}
+.tx-detail dt{color:var(--muted)}
+.tx-detail dd{overflow-wrap:anywhere}
+.frame-change{margin-top:12px;padding-top:12px;border-top:1px solid var(--line-soft)}
+.frame-change label{display:block;margin-bottom:6px;font-size:13px;font-weight:700}
+.frame-change-row{display:flex;gap:8px}
+.frame-change select{flex:1;min-width:0;min-height:44px;padding:8px 10px;border:1px solid #bac8bc;border-radius:10px;background:#fff;font-size:16px}
+.settings-card{margin-top:18px}
+.settings-card summary{min-height:50px;padding:13px 24px;cursor:pointer;font-weight:700;color:var(--muted)}
+.settings-body{display:grid;gap:8px;max-width:560px;padding:0 24px 20px}
+.settings-body label{font-size:14px;font-weight:700}
+.settings-row{display:flex;gap:8px;align-items:flex-start}
+.settings-row .input-wrap{flex:1;min-width:0}
+.settings-row input{width:100%;min-height:46px;padding:10px 70px 10px 12px;border:1px solid #bac8bc;border-radius:10px;background:#fff;font-size:16px;font-variant-numeric:tabular-nums}
+.settings-error{min-height:1.4em;color:var(--error);font-size:13px;font-weight:700}
+
+/* 要確認・用途の確認 */
+.queue-switch{display:inline-flex;gap:4px;padding:4px;margin:-8px 0 20px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.queue-switch button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:6px 16px;border-radius:9px;color:var(--muted);font-weight:700}
+.queue-switch button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
+.queue-switch .count{font-variant-numeric:tabular-nums}
+.review-layout{display:grid;grid-template-columns:230px minmax(0,1fr);grid-template-rows:auto 1fr;grid-template-areas:"progress card" "done card";gap:22px;align-items:start}
+.progress-card{grid-area:progress;padding:22px}
+.review-card{grid-area:card;padding:28px 30px}
+.done-card{grid-area:done}
+.remaining{font-size:15px}
+.remaining strong{font-size:30px;margin:0 3px}
+.steps{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.step{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--muted);font-weight:700}
+.step[aria-current="step"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.review-top{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
+.review-meta{font-size:13px;color:var(--muted)}
+.review-merchant{font-size:24px;line-height:1.35;margin-top:2px;overflow-wrap:anywhere}
+.review-desc{margin-top:2px}
+.review-amount{font-size:30px;font-weight:700;line-height:1.3;white-space:nowrap;text-align:right}
+.review-amount .tag{display:block;width:max-content;margin:4px 0 0 auto}
+.match-note{margin-top:18px;padding:12px 14px;border-radius:12px;background:#f4f5f5;font-size:14px}
+.evidence{margin-top:8px;font-size:13px;color:var(--muted)}
+.field-group{border:0;padding:0;margin:24px 0 0;min-width:0}
+.field-group legend{padding:0;margin-bottom:10px;font-weight:700}
+.candidate-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.frame-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.choice{display:block;position:relative;cursor:pointer}
+.choice input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+.choice>span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-height:48px;height:100%;padding:8px 6px;border:1px solid var(--line);border-radius:10px;background:#fff;text-align:center;font-size:14px;line-height:1.35}
+.choice:hover>span{border-color:#b9cbbd}
+.candidate-grid .choice>span{align-items:flex-start;text-align:left;min-height:74px;padding:12px 14px}
+.frame-grid .choice>span{flex-direction:row;justify-content:flex-start;gap:10px;min-height:58px;padding:8px 10px;text-align:left}
+.choice-text{display:flex;flex-direction:column;min-width:0;word-break:keep-all}
+.choice small{font-size:12px;font-weight:400;color:var(--muted)}
+.choice input:checked+span{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);font-weight:700}
+.choice input:focus-visible+span{outline:3px solid #b07a22;outline-offset:2px}
+.rule-box{display:grid;gap:2px;margin-top:16px;padding:6px 14px;border:1px solid var(--line);border-radius:12px;background:#fafafa}
+.check{display:flex;align-items:flex-start;gap:10px;min-height:44px;padding:10px 0;font-size:14px;cursor:pointer}
+.check input{flex:none;width:20px;height:20px;margin:1px 0 0;accent-color:var(--accent)}
+.hint{margin-top:18px;font-size:13px;color:var(--muted)}
+.review-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:10px;padding-top:16px;border-top:1px solid var(--line)}
+.review-actions .button{min-width:180px}
+.review-empty{display:grid;grid-template-columns:minmax(0,1fr);gap:22px;max-width:720px}
+.review-empty>.done-card{grid-area:auto}
+.complete-card{padding:44px 26px;text-align:center}
+.complete-mark{width:64px;height:64px;margin:0 auto 18px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center}
+.complete-mark .icon{width:30px;height:30px}
+.complete-card h2{font-size:22px;margin-bottom:6px}
+.complete-card .button{margin-top:22px}
+.done-card summary{min-height:50px;padding:13px 20px;cursor:pointer;font-weight:700;color:var(--muted)}
+.done-list{padding:0 20px 8px}
+.done-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--line-soft)}
+.done-item p{overflow-wrap:anywhere}
+.done-frame{display:inline-flex;align-items:center;gap:6px;vertical-align:middle;font-weight:700}
+
+/* 資産 */
+.assets-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;grid-template-rows:auto 1fr;grid-template-areas:"chart form" "table form";gap:22px;align-items:start}
+.chart-card{grid-area:chart;padding:26px 26px 20px}
+.balance-form{grid-area:form;padding:24px}
+.table-card{grid-area:table}
+.chart-card .big{font-size:38px;margin:8px 0 4px}
+.chart-scroll{overflow-x:auto;margin:16px -6px 0;padding:0 6px;-webkit-overflow-scrolling:touch}
+.asset-chart{display:block}
+.asset-chart text{font-size:12px;fill:#5b6862}
+.asset-chart .axis-current{fill:#1f2d29;font-weight:700}
+.asset-chart .total{font-size:13px;font-weight:700;fill:#1f2d29}
+.asset-chart .provisional{font-size:11px;font-weight:700;fill:#93540e}
+.asset-chart .missing{fill:#93540e}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:8px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:11px;height:11px;margin-right:6px;border-radius:3px;vertical-align:-1px}
+.balance-form h2{font-size:18px}
+.field{margin-top:16px}
+.field label{display:block;margin-bottom:6px;font-size:14px;font-weight:700}
+.field select,.field input{width:100%;min-height:48px;padding:10px 12px;border:1px solid #bac8bc;border-radius:10px;background:#fff;font-size:16px}
+.input-wrap{position:relative}
+.input-wrap input{padding-right:40px;font-variant-numeric:tabular-nums}
+.unit{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.field-note{min-height:1.6em;margin-top:5px;font-size:13px;color:var(--muted)}
+.field-note.is-error{color:var(--error);font-weight:700}
+input[aria-invalid="true"]{border-color:var(--error);background:#fff8f5}
+.balance-preview{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:14px 0 16px;padding-top:14px;border-top:1px solid var(--line)}
+.balance-preview strong{font-size:22px}
+.form-error{min-height:1.4em;margin-top:10px;color:var(--error);font-size:13px;font-weight:700}
+.table-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:20px 24px 8px}
+.table-head h2{font-size:18px}
+.table-scroll{overflow-x:auto;padding:0 24px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:10px 8px;text-align:right;white-space:nowrap;border-top:1px solid var(--line-soft)}
+thead th{border-top:0;color:var(--muted);font-size:12px;font-weight:600}
+th:first-child,td:first-child{text-align:left;padding-left:0}
+th:last-child,td:last-child{padding-right:0}
+tbody th{font-weight:400}
+.table-month{min-height:44px;color:var(--accent);font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.row-tag{display:inline-block;margin-left:6px;padding:0 5px;border-radius:5px;background:var(--warn-soft);color:var(--warn);font-size:11px;font-weight:700;line-height:1.7}
+tr.is-fresh{background:#f2f7f0}
+.table-note{padding:8px 24px 18px}
+
+/* トースト・確認ダイアログ */
+#toast{position:fixed;left:50%;bottom:24px;z-index:40;transform:translateX(-50%);width:max-content;max-width:calc(100% - 32px);padding:12px 20px;border-radius:12px;background:#233a31;color:#fff;font-size:14px;box-shadow:0 8px 24px rgba(20,40,32,.25);pointer-events:none}
+dialog{width:calc(100% - 32px);max-width:440px;padding:24px;border:1px solid var(--line);border-radius:18px;color:var(--ink);background:#fff}
+dialog::backdrop{background:rgba(20,40,32,.45)}
+dialog h2{font-size:18px;margin-bottom:8px}
+.dialog-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
+
+/* Only the app-owned content scrolls on mobile; never reach into the GAS parent. */
+.app-scroll{display:contents}
+
+/* スマホ */
+@media (max-width:760px){
+  html{height:100%;overflow:hidden;overscroll-behavior:none;background:#fff}
+  body{height:100%;height:100dvh;overflow:hidden;overscroll-behavior:none;display:flex;flex-direction:column;padding:0;background:#fff}
+  .masthead{flex:none;position:relative;z-index:30;background:#fff;padding-top:env(safe-area-inset-top)}
+  .app-scroll{display:block;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:none;-webkit-overflow-scrolling:touch;padding-bottom:calc(84px + env(safe-area-inset-bottom));scroll-padding:16px;background:#fff}
+
+  .shell{padding:0 16px}
+  .masthead .shell{min-height:58px}
+  .brand{font-size:18px}
+  .brand-mark{width:28px;height:28px;border-radius:9px}
+  .nav{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:6px 8px calc(6px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--line);box-shadow:0 -4px 18px rgba(31,45,41,.06)}
+  .nav a{flex-direction:column;justify-content:center;gap:2px;min-height:58px;padding:6px 2px;font-size:11px}
+  .nav a .icon{width:22px;height:22px}
+  .nav .badge{position:absolute;top:4px;left:calc(50% + 8px);min-width:19px;height:19px;font-size:11px}
+  main{padding-top:4px}
+  h1{font-size:22px}
+  .page-head{margin:6px 0 16px;gap:10px}
+  .month-switch{border-radius:10px}
+  .month-current{min-width:6.6em;font-size:14px}
+  .top-grid{grid-template-columns:1fr;gap:12px;margin-bottom:16px}
+  .spend-card{padding:20px 20px 18px}
+  .big{font-size:36px;margin:6px 0 8px}
+  .compare{font-size:13px}
+  .asset-card{padding:18px 20px 14px}
+  .asset-total{font-size:25px}
+  .asset-sub{font-size:13px}
+  .mini-chart{width:112px;height:48px}
+  .cat-card h2{font-size:16px;padding:16px 16px 10px}
+  .cat-cols,.cat-row{grid-template-columns:minmax(0,1fr) 78px 80px 14px;gap:6px}
+  .cat-cols{padding:7px 16px;font-size:11px}
+  .cat-row{min-height:58px;padding:8px 16px}
+  .cat-name{gap:9px}
+  .frame-icon{width:30px;height:30px;border-radius:9px}
+  .frame-icon .icon{width:17px;height:17px}
+  .cat-label{font-size:14px}
+  .cat-amount{font-size:14px}
+  .cat-diff{font-size:12px}
+  .cat-row>.icon{width:14px;height:14px}
+  .cat-panel{padding:2px 12px 12px 16px}
+  .tx-row{padding-left:12px}
+  .tx-detail{margin-left:12px;padding:10px 12px}
+  .tx-detail dl{grid-template-columns:6em minmax(0,1fr)}
+  .settings-card summary{padding:13px 16px}
+  .settings-body{padding:0 16px 18px}
+  .queue-switch{display:grid;grid-template-columns:1fr 1fr;width:100%;margin:-4px 0 14px}
+  .queue-switch button{padding:6px 8px;font-size:14px}
+  .review-layout{display:flex;flex-direction:column;gap:14px}
+  .review-layout,.assets-layout{align-items:stretch}
+  .review-layout>*,.assets-layout>*{min-width:0}
+  .progress-card{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px}
+  .remaining strong{font-size:24px}
+  .steps{margin-top:0;justify-content:flex-end}
+  .review-card{padding:20px 18px}
+  .review-merchant{font-size:20px}
+  .review-amount{font-size:24px}
+  .review-top{gap:10px}
+  .candidate-grid{grid-template-columns:1fr}
+  .candidate-grid .choice>span{min-height:60px}
+  .frame-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .frame-grid .choice>span{font-size:13px;min-height:54px;padding:7px 8px;gap:8px}
+  .review-actions .button{flex:1;min-width:0}
+  .complete-card{padding:34px 20px}
+  .done-card summary{padding:13px 16px}
+  .done-list{padding:0 16px 8px}
+  .assets-layout{display:flex;flex-direction:column;gap:14px}
+  .chart-card{padding:20px 16px 16px}
+  .chart-card .big{font-size:32px}
+  .balance-form{padding:20px 16px}
+  .table-head{padding:18px 16px 6px}
+  .table-head h2,.balance-form h2{font-size:16px}
+  .table-scroll{padding:0 12px}
+  table{font-size:12px}
+  th,td{padding:9px 5px}
+  .table-month{font-size:12px;min-width:44px}
+  td .row-tag,th .row-tag{display:block;width:max-content;margin:0 0 2px auto}
+  th .row-tag{margin-left:0}
+  .table-note{padding:6px 16px 16px}
+  .footer{padding-bottom:16px}
+  #toast{bottom:calc(88px + env(safe-area-inset-bottom));font-size:13px}
+}
+@media (max-width:360px){
+  .shell{padding:0 12px}
+  .month-current{min-width:5.6em;font-size:13px}
+  .cat-cols,.cat-row{grid-template-columns:minmax(0,1fr) 72px 74px 12px;gap:4px}
+  .cat-row,.cat-cols{padding-left:12px;padding-right:12px}
+  .cat-name{gap:7px}
+  .big{font-size:32px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+.tx-detail form[data-owner-note]{display:grid;gap:12px;margin:12px 0}
+.tx-detail form[data-owner-note] label{display:grid;gap:6px;font-size:13px}
+.tx-detail form[data-owner-note] textarea{width:100%;min-width:0;padding:10px;border:1px solid var(--line);border-radius:8px;background:white;color:inherit;font:inherit;resize:vertical}
+.tx-detail details>summary{cursor:pointer;margin-top:14px;font-size:13px}
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="shell">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24"><rect x="5" y="3" width="15" height="18"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="12" y1="8" x2="17" y2="8"/><line x1="12" y1="12" x2="17" y2="12"/><line x1="12" y1="16" x2="16" y2="16"/></svg></span>家計簿</div>
+    <nav class="nav" aria-label="画面の切り替え">
+      <a href="#overview" data-nav="overview"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="13" width="4" height="7"/><rect x="10" y="8" width="4" height="12"/><rect x="17" y="3" width="4" height="17"/></svg><span>今月の内訳</span></a>
+      <a href="#review" data-nav="review"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18"/><polyline points="4,13 10,18 20,5"/></svg><span>要確認</span><span class="badge" id="review-badge" hidden></span></a>
+      <a href="#assets" data-nav="assets"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="3" y1="21" x2="21" y2="21"/><line x1="3" y1="21" x2="3" y2="3"/><polyline points="6,17 10,13 14,15 20,6"/></svg><span>資産</span></a>
+    </nav>
+  </div>
+</header>
+<div class="app-scroll" id="app-scroll" role="region" aria-label="家計簿の本文" tabindex="0">
+<div class="banner" id="storage-warning" role="status" hidden><div class="shell" id="storage-warning-text"></div></div>
+<div class="shell" role="status"><span id="cloud-mode">台帳に接続中…</span> <button type="button" id="cloud-refresh">再読込み</button> <button type="button" id="cloud-retry" hidden>同じ保存の結果を確認</button></div>
+<main class="shell" id="main">
+  <noscript><p class="card" style="padding:20px">この家計簿を使うには、ブラウザのJavaScriptを有効にしてください。</p></noscript>
+  <section id="page-overview" aria-label="今月の内訳" hidden></section>
+  <section id="page-review" aria-label="要確認" hidden></section>
+  <section id="page-assets" aria-label="資産" hidden></section>
+  <section id="mail-status-panel" aria-label="利用通知の状態"></section>
+  <section id="classification-panel" aria-label="分類結果の受渡し"></section>
+  <section id="csv-panel" aria-label="CSV取込"></section>
+</main>
+<footer class="footer shell"><p id="data-note"></p></footer>
+</div>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+
+
+
+<script>
+/* Csv13Review_BEGIN */
+/* Read-only reconciliation proposals. No financial values or ledger rows are mutated. */
+var KakeiboCsv13Review=(()=>{
+  'use strict';
+  const norm=s=>String(s||'').normalize('NFKC').replace(/−/g,'-').replace(/\s+/g,'').toUpperCase();
+  function preview(file,card,state){
+    if(file?.profile!=='smbc-13-observed-v1'||!['olive','amazon_master'].includes(card)||!Array.isArray(state?.transactions))throw Error('CSV13_REVIEW_INVALID_INPUT');
+    const parents=new Set(state.transactions.map(t=>t.parent_id).filter(Boolean));
+    const tx=state.transactions.filter(t=>t.card===card&&!parents.has(t.id));
+    const rows=file.rows.map(r=>{
+      const foreign=!!r.currency_raw&&r.currency_raw!=='JPY';
+      // Column7 denomination is not yet verified: comparison is a proposal only.
+      const sameAmount=t=>foreign?t.currency===r.currency_raw&&t.amount_foreign===Number(r.foreign_amount_raw):t.amount_jpy===r.usage_amount_reported;
+      const exact=tx.filter(t=>t.used_at.slice(0,10)===r.used_at&&sameAmount(t)&&norm(t.merchant_raw)===norm(r.merchant_raw));
+      const day=tx.filter(t=>t.used_at.slice(0,10)===r.used_at&&sameAmount(t));
+      const nearby=tx.filter(t=>sameAmount(t)&&Math.abs(Date.parse(t.used_at.slice(0,10))-Date.parse(r.used_at))<=3*86400000);
+      const candidates=exact.length?exact:day.length?day:nearby;
+      return {row_number:r.row_number,status:exact.length?'strict_candidate':day.length?'merchant_review':nearby.length?'date_review':'csv_only_review',candidate_purchase_ids:candidates.map(t=>t.id),source:{...r},financial_update_allowed:false};
+    });
+    // Enforce one-to-one globally. Equal rows are a group, never arbitrary ordinal pairing.
+    const uses=new Map();for(const r of rows)for(const id of r.candidate_purchase_ids)uses.set(id,(uses.get(id)||0)+1);
+    for(const r of rows)if(r.status==='strict_candidate')r.status=r.candidate_purchase_ids.length===1&&uses.get(r.candidate_purchase_ids[0])===1?'unique_strict_proposal':'group_review';
+    const seen=new Set(rows.flatMap(r=>r.candidate_purchase_ids));
+    return {mode:'preview_only',persistence_ready:false,card,billing_month:file.billing_month,rows,unmatched_transaction_ids:tx.filter(t=>!seen.has(t.id)).map(t=>t.id),summary:{...file.summary,row_count:rows.length,unique_strict_proposals:rows.filter(r=>r.status==='unique_strict_proposal').length,review_rows:rows.filter(r=>r.status!=='unique_strict_proposal').length}};
+  }
+  return {preview};
+})();
+if(typeof module!=='undefined')module.exports=KakeiboCsv13Review;
+/* Csv13Review_END */
+</script>
+<script>
+/* Csv13_BEGIN */
+/* Analysis-only 13-column statement adapter. No persistence or RPC integration.
+ * Unverified column semantics remain raw; blank billing amounts are never zero.
+ */
+var KakeiboCsv13=(()=>{
+  'use strict';
+  const PROFILE='smbc-13-observed-v1';
+  const fail=c=>{throw Error('CSV13_'+c);};
+  function integer(s){if(!/^-?\d+$/.test(s))fail('INVALID_AMOUNT');const n=Number(s);if(!Number.isSafeInteger(n)||Math.abs(n)>999999999999)fail('INVALID_AMOUNT');return n;}
+  function date(s){const m=/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/.exec(s);if(!m)fail('INVALID_DATE');const [y,mo,d]=m.slice(1).map(Number),v=new Date(Date.UTC(y,mo-1,d));if(y<2000||v.getUTCFullYear()!==y||v.getUTCMonth()!==mo-1||v.getUTCDate()!==d)fail('INVALID_DATE');return `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}
+  function parse(text,tokenize){if(typeof tokenize!=='function')fail('MISSING_TOKENIZER');const records=tokenize(text);let start=0;if(records[0]?.length===3&&!/^\d{4}\//.test(records[0][0]))start=1;
+    const rows=[];let billingMonth=null;
+    for(let i=start;i<records.length;i++){const r=records[i];if(r.every(v=>v===''))continue;if(r.length!==13)fail('UNSUPPORTED_COLUMNS');
+      const used=date(r[0]);if(!r[1].trim()||r[1].length>512)fail('INVALID_MERCHANT');
+      // Reject dependent/unknown identity roles rather than persist their contents.
+      if(r[2]!=='ご本人')fail('UNSUPPORTED_OWNER_ROLE');
+      if(r[3]!=='1回払い'||r[4]!==''||r[8]!=='')fail('UNSUPPORTED_PAYMENT_FIELDS');
+      const m=/^'(\d{2})\/(0[1-9]|1[0-2])$/.exec(r[5]);if(!m)fail('INVALID_BILLING_MONTH');const bm='20'+m[1]+'-'+m[2];if(billingMonth&&billingMonth!==bm)fail('MIXED_BILLING_MONTH');billingMonth=bm;
+      const foreign=r.slice(9);if(foreign.some(Boolean)&&(!/^\d+(?:\.\d+)?$/.test(r[9])||!/^[A-Z]{3}$/.test(r[10])||!/^\d+(?:\.\d+)?$/.test(r[11])||! /^(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])$/.test(r[12])))fail('INVALID_FOREIGN_FIELDS');
+      rows.push({row_number:i+1,used_at:used,merchant_raw:r[1],billing_month:bm,payment_method_raw:r[3],column5_raw:r[4],usage_amount_reported:integer(r[6]),billed_jpy:r[7]===''?null:integer(r[7]),billing_amount_status:r[7]===''?'not_listed':'listed',column9_raw:r[8],foreign_amount_raw:r[9]||null,currency_raw:r[10]||null,exchange_rate_raw:r[11]||null,column13_raw:r[12]||null});
+    }
+    if(!rows.length||rows.length>1000)fail('INVALID_ROW_COUNT');const known=rows.reduce((n,r)=>n+(r.billed_jpy===null?0:r.billed_jpy),0),missing=rows.filter(r=>r.billed_jpy===null).length;if(!Number.isSafeInteger(known))fail('TOTAL_OVERFLOW');
+    return {profile:PROFILE,billing_month:billingMonth,rows,summary:{known_billed_total:known,missing_billed_count:missing,billed_total:missing?null:known},persistence_ready:false};
+  }
+  return {PROFILE,parse};
+})();
+if(typeof module!=='undefined')module.exports=KakeiboCsv13;
+/* Csv13_END */
+</script>
+<script>
+/* CSV_PARSER_BEGIN */
+/* Pure SMBC CSV import. No file names, identity header, provider credentials or raw CSV persist.
+ * Financial row multiplicity is preserved. Purchase ledger and monthly billing are separate.
+ */
+var KakeiboCsv=(()=>{
+  'use strict';
+  const PROFILE='smbc-7-v1',CARDS=['olive','amazon_master'],MAX=999999999999;
+  const clone=x=>JSON.parse(JSON.stringify(x));
+  const fail=c=>{throw Error('CSV_'+c);};
+  const keys=(o,allowed)=>{if(!o||typeof o!=='object'||Array.isArray(o)||Object.keys(o).some(k=>!allowed.includes(k)))fail('INVALID_SHAPE');};
+  const month=s=>typeof s==='string'&&/^\d{4}-(0[1-9]|1[0-2])$/.test(s);
+  function date(s){if(typeof s!=='string')fail('INVALID_DATE');const m=/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/.exec(s.trim());if(!m)fail('INVALID_DATE');const y=+m[1],mo=+m[2],d=+m[3],v=new Date(Date.UTC(y,mo-1,d));if(y<2000||v.getUTCFullYear()!==y||v.getUTCMonth()!==mo-1||v.getUTCDate()!==d)fail('INVALID_DATE');return [m[1],String(mo).padStart(2,'0'),String(d).padStart(2,'0')].join('-');}
+  function money(s){s=s.trim().replace(/^[−－]/,'-');if(!/^-?(?:\d+|\d{1,3}(?:,\d{3})+)$/.test(s))fail('INVALID_AMOUNT');const n=Number(s.replace(/,/g,''));if(!Number.isSafeInteger(n)||Math.abs(n)>MAX)fail('INVALID_AMOUNT');return n;}
+  function count(s){const n=String(s).normalize('NFKC').trim();if(['一括','一括払い','1回払い'].includes(n))return 1;const m=/^(\d{1,3})(?:回(?:払い)?)?$/.exec(n);return m&&+m[1]>=1&&+m[1]<=120?+m[1]:null;}
+  function tokenize(text){if(typeof text!=='string'||text.length>2000000)fail('FILE_TOO_LARGE');text=text.replace(/^\uFEFF/,'');let rows=[],row=[],v='',quoted=false,afterQuote=false;
+    for(let i=0;i<text.length;i++){const c=text[i];if(quoted){if(c==='"'){if(text[i+1]==='"'){v+='"';i++;}else{quoted=false;afterQuote=true;}}else v+=c;continue;}
+      if(c==='"'){if(v!==''||afterQuote)fail('INVALID_QUOTES');quoted=true;}
+      else if(c===','||c==='\n'||c==='\r'){row.push(v);v='';afterQuote=false;if(c!==','){rows.push(row);row=[];if(c==='\r'&&text[i+1]==='\n')i++;}}
+      else{if(afterQuote)fail('INVALID_QUOTES');v+=c;}
+    }if(quoted)fail('INVALID_QUOTES');if(v!==''||row.length||afterQuote){row.push(v);rows.push(row);}return rows;
+  }
+  // Parse in the browser BEFORE RPC. The first 3-cell identity record is discarded, never returned.
+  function parse(text,card,billing_month){if(!CARDS.includes(card)||!month(billing_month))fail('INVALID_CARD_OR_MONTH');const records=tokenize(text);let start=0;
+    if(records[0]?.length===3&&!/^\d{4}[/-]/.test(records[0][0]))start=1;
+    const rows=[];let reported_total=null,totalSeen=false;
+    for(let i=start;i<records.length;i++){
+      const r=records[i];if(r.every(x=>x.trim()===''))continue;
+      if(r.length!==7)fail('UNSUPPORTED_COLUMNS_ROW_'+(i+1));
+      if(r[0].trim()===''){
+        if(r.slice(0,5).every(x=>!x.trim())&&r[5].trim()&&!r[6].trim()){if(totalSeen)fail('DUPLICATE_TOTAL');reported_total=money(r[5]);totalSeen=true;continue;}
+        if(!totalSeen&&rows.length&&[r[0],r[2],r[3],r[4],r[5]].every(x=>!x.trim())&&/外貨|換算|現地|レート|\b[A-Z]{3}\b/.test(r[1]+' '+r[6])){const last=rows[rows.length-1];last.foreign_note=[last.foreign_note,r[1],r[6]].filter(Boolean).join('\n');continue;}
+        fail('UNSUPPORTED_ROW_'+(i+1));
+      }
+      if(totalSeen)fail('DETAIL_AFTER_TOTAL');
+      rows.push({row_number:i+1,used_at:date(r[0]),merchant_raw:r[1],amount_jpy:money(r[2]),payment_total_raw:r[3],payment_index_raw:r[4],billed_jpy:money(r[5]),memo:r[6],foreign_note:''});
+    }
+    return validateFile({profile:PROFILE,card,billing_month,rows,reported_total});
+  }
+  function validateFile(f){keys(f,['profile','card','billing_month','rows','reported_total']);if(f.profile!==PROFILE||!CARDS.includes(f.card)||!month(f.billing_month)||!Array.isArray(f.rows)||!f.rows.length||f.rows.length>1000)fail('INVALID_FILE');
+    const seen=new Set();for(const r of f.rows){keys(r,['row_number','used_at','merchant_raw','amount_jpy','payment_total_raw','payment_index_raw','billed_jpy','memo','foreign_note']);if(!Number.isInteger(r.row_number)||r.row_number<1||seen.has(r.row_number))fail('INVALID_ROW');seen.add(r.row_number);if(date(r.used_at)!==r.used_at||typeof r.merchant_raw!=='string'||!r.merchant_raw.trim()||r.merchant_raw.length>512||!Number.isSafeInteger(r.amount_jpy)||Math.abs(r.amount_jpy)>MAX||!Number.isSafeInteger(r.billed_jpy)||Math.abs(r.billed_jpy)>MAX||['payment_total_raw','payment_index_raw','memo','foreign_note'].some(k=>typeof r[k]!=='string'||r[k].length>4096))fail('INVALID_ROW');}
+    if(f.reported_total!==null&&(!Number.isSafeInteger(f.reported_total)||Math.abs(f.reported_total)>MAX))fail('INVALID_TOTAL');return f;
+  }
+  const empty=()=>({imports:[],bills:[]});
+  function validateLedger(s){if(!s.csv)return;const c=s.csv;if(!Array.isArray(c.imports)||!Array.isArray(c.bills))fail('CORRUPT_LEDGER');const imports=new Set(c.imports.map(x=>x.id)),bills=new Set();for(const b of c.bills){if(bills.has(b.id)||!imports.has(b.import_id)||!['linked','unresolved'].includes(b.status)||!Number.isSafeInteger(b.billed_jpy)||(b.status==='linked'&&!s.transactions.some(t=>t.id===b.purchase_id)))fail('CORRUPT_LEDGER');bills.add(b.id);}
+    const parents=new Set(s.transactions.map(t=>t.parent_id).filter(Boolean)),totals={};for(const t of s.transactions.filter(t=>!parents.has(t.id))){const m=t.used_at.slice(0,7);totals[m]=(totals[m]||0)+(t.amount_jpy||0);if(!Number.isSafeInteger(totals[m]))fail('TOTAL_OVERFLOW');}}
+  function canonical(r){return [r.used_at,r.merchant_raw,r.amount_jpy,count(r.payment_total_raw)??r.payment_total_raw.normalize('NFKC'),count(r.payment_index_raw)??r.payment_index_raw.normalize('NFKC'),r.billed_jpy,r.memo,r.foreign_note];}
+  function signature(t){return [t.card,t.used_at.slice(0,10),t.amount_jpy].join('|');}
+  function makePurchase(b,tools,now){const pasmo=/PASMO.*チャージ|チャージ.*PASMO/i.test(b.merchant_raw.normalize('NFKC'));return {id:'csv#'+b.id,source:'csv',card:b.card,used_at:b.used_at,merchant_raw:b.merchant_raw,merchant_key:tools.merchantKey(b.merchant_raw),amount_jpy:b.amount_jpy,amount_foreign:null,currency:null,category:pasmo?'交通':null,description:b.memo||null,parent_id:null,detail_msg_id:null,match_status:'not_needed',candidate_msg_ids:[],evidence:'CSV明細から取込',input_version:b.id,confidence:pasmo?1:0,classified_by:pasmo?'rule':null,status:pasmo?'auto':'review',csv_status:'matched',created_at:now,updated_at:now,csv_origin:{billing_month:b.billing_month,row_number:b.row_number},csv_bill_ids:[b.id]};}
+  function matches(t,b){if(t.card!==b.card)return false;if(signature(t)===signature(b))return true;const m=/(?:^|\s)(-?\d+(?:\.\d+)?)\s+([A-Z]{3})(?:\s|$)/.exec((b.memo+' '+b.foreign_note).replace(/\u3000/g,' '));return (t.amount_jpy===null||t.amount_jpy===b.amount_jpy)&&m&&m[2]!=='JPY'&&t.currency===m[2]&&t.amount_foreign===+m[1]&&Math.abs(Date.parse(t.used_at.slice(0,10))-Date.parse(b.used_at))<=3*86400000;}
+  function link(t,b){if(t.amount_jpy===null)t.amount_jpy=b.amount_jpy;t.csv_status='matched';t.csv_bill_ids=(t.csv_bill_ids||[]).concat(b.id);b.purchase_id=t.id;b.status='linked';}
+  function matching(s,b){const parents=new Set(s.transactions.map(t=>t.parent_id).filter(Boolean));return s.transactions.filter(t=>!parents.has(t.id)&&matches(t,b));}
+  function refreshCandidates(s){for(const b of s.csv.bills.filter(x=>x.status==='unresolved')){const used=new Set(s.csv.bills.filter(x=>x.id!==b.id&&x.card===b.card&&x.billing_month===b.billing_month&&x.purchase_id).map(x=>x.purchase_id));b.candidate_purchase_ids=matching(s,b).filter(t=>!used.has(t.id)).map(t=>t.id);}}
+  function plan(before,files,tools,now){if(!Array.isArray(files)||!files.length||files.length>12||files.reduce((n,f)=>n+(f.rows?.length||0),0)>2000)fail('BATCH_LIMIT');if(!tools||typeof tools.hash!=='function'||typeof tools.merchantKey!=='function')fail('MISSING_TOOLS');
+    const s=clone(before);s.csv=s.csv||empty();validateLedger(s);const report={files:[],created:0,linked:0,unresolved:0,skipped:0,unmatched_notifications:[]};
+    // Billing-month order is presentation only; installment linkage always requires an explicit decision.
+    for(const input of files.slice().sort((a,b)=>a.billing_month.localeCompare(b.billing_month))){const f=validateFile(input);const sorted=f.rows.map(r=>({row:r,key:JSON.stringify(canonical(r))})).sort((a,b)=>(a.key<b.key?-1:a.key>b.key?1:0)||a.row.row_number-b.row.row_number);
+      const billedTotal=f.rows.reduce((n,r)=>n+r.billed_jpy,0);if(!Number.isSafeInteger(billedTotal))fail('TOTAL_OVERFLOW');if(f.reported_total!==null&&f.reported_total!==billedTotal)fail('BILL_TOTAL_MISMATCH');
+      // Legacy hashes lost non-ASCII bytes. Compare the COMPLETE stored financial row multiset,
+      // never the old hash alone. Keep all existing IDs/links/history unchanged; no migration write.
+      const existing=s.csv.imports.filter(x=>x.card===f.card&&x.billing_month===f.billing_month);
+      if(existing.length){if(existing.length!==1)fail('CORRUPT_LEDGER');const entry=existing[0],saved=s.csv.bills.filter(b=>b.import_id===entry.id).map(b=>JSON.stringify(canonical(b))).sort();
+        if(saved.length!==entry.row_count||saved.length!==f.rows.length||JSON.stringify(saved)!==JSON.stringify(sorted.map(x=>x.key)))fail('STATEMENT_CHANGED_REVIEW');
+        report.skipped++;report.files.push({id:entry.id,card:f.card,billing_month:f.billing_month,status:'already_imported'});continue;}
+      const fingerprint='u8v2-'+tools.hash(JSON.stringify([PROFILE,f.card,f.billing_month,sorted.map(x=>x.key)]));const id='import#'+fingerprint;
+      const dates=f.rows.map(r=>r.used_at).sort();const entry={id,card:f.card,billing_month:f.billing_month,period_start:dates[0],period_end:dates[dates.length-1],row_count:f.rows.length,billed_total:billedTotal,reported_total:f.reported_total,created_at:now};s.csv.imports.push(entry);
+      const multiplicity={};f.rows.forEach(r=>{const k=signature({...r,card:f.card});multiplicity[k]=(multiplicity[k]||0)+1;});
+      for(let i=0;i<sorted.length;i++){const r=sorted[i].row,b={...clone(r),id:fingerprint+'#'+(i+1),import_id:id,card:f.card,billing_month:f.billing_month,purchase_id:null,status:'unresolved',reason:null,candidate_purchase_ids:[]};
+        const total=count(r.payment_total_raw),index=count(r.payment_index_raw)||((total===1&&!r.payment_index_raw.trim())?1:null);b.payment_total=total;b.payment_index=index;
+        const candidates=matching(s,b).filter(t=>!t.id.startsWith('csv#'+fingerprint+'#')),isLater=total!==null&&total>1&&index!==null&&index>1;
+        const usedInStatement=new Set(s.csv.bills.filter(x=>x.card===b.card&&x.billing_month===b.billing_month&&x.purchase_id).map(x=>x.purchase_id));
+        b.candidate_purchase_ids=candidates.filter(t=>!usedInStatement.has(t.id)).map(t=>t.id);
+        // A unique notification can be reconciled by card/date/amount; never guess among duplicates.
+        const notice=candidates.filter(t=>t.source!=='csv'&&!usedInStatement.has(t.id));
+        const existingCsv=candidates.some(t=>t.source==='csv');
+        if(total===null||index===null||index>total)b.reason='payment_terms_unknown';
+        else if(isLater)b.reason='installment_purchase_link';
+        else if(candidates.length&&(!existingCsv&&notice.length===1&&!notice[0].mail_source_id&&!(notice[0].csv_bill_ids||[]).length&&multiplicity[signature(b)]===1)){
+          const t=notice[0];link(t,b);report.linked++;
+        }else if(candidates.length&&(existingCsv||notice.length))b.reason='ambiguous_purchase';
+        else {const t=makePurchase(b,tools,now);s.transactions.push(t);b.purchase_id=t.id;b.status='linked';report.created++;}
+        if(b.status==='unresolved')report.unresolved++;s.csv.bills.push(b);
+      }
+      report.files.push({...entry,status:'ready',missing_total:f.reported_total===null});
+    }
+    refreshCandidates(s);
+    for(const f of report.files.filter(f=>f.status==='ready')){const linked=new Set(s.csv.bills.filter(b=>b.import_id===f.id&&b.purchase_id).map(b=>b.purchase_id));const possible=new Set(s.csv.bills.filter(b=>b.import_id===f.id&&b.status==='unresolved').flatMap(b=>b.candidate_purchase_ids));for(const t of before.transactions.filter(t=>['card_alert','card_batch'].includes(t.source)&&t.card===f.card&&t.used_at.slice(0,10)>=f.period_start&&t.used_at.slice(0,10)<=f.period_end)){if(!linked.has(t.id)&&!possible.has(t.id))report.unmatched_notifications.push({id:t.id,card:f.card,billing_month:f.billing_month,used_at:t.used_at,amount_jpy:t.amount_jpy});}}
+    validateLedger(s);return {state:s,report};
+  }
+  function resolve(before,billId,purchaseId,tools,now){const s=clone(before),b=s.csv?.bills.find(x=>x.id===billId);if(!b||b.status!=='unresolved')fail('NOT_UNRESOLVED');
+    if(purchaseId==='__new__'){const t=makePurchase(b,tools,now);s.transactions.push(t);b.purchase_id=t.id;}
+    else {if(!b.candidate_purchase_ids.includes(purchaseId))fail('INVALID_PURCHASE_LINK');const t=s.transactions.find(x=>x.id===purchaseId);if(!t||!matches(t,b))fail('INVALID_PURCHASE_LINK');if(s.csv.bills.some(x=>x.id!==b.id&&x.card===b.card&&x.billing_month===b.billing_month&&x.purchase_id===purchaseId))fail('PURCHASE_USED_TWICE');link(t,b);}
+    b.status='linked';b.resolved_at=now;b.resolved_by='user';refreshCandidates(s);validateLedger(s);return s;
+  }
+  return {PROFILE,parse,tokenize,validateFile,validateLedger,plan,resolve,count};
+})();
+if(typeof module!=='undefined')module.exports=KakeiboCsv;
+/* CSV_PARSER_END */
+</script>
+<script>
+(function () {
+  'use strict';
+
+  const FIXTURE = {};
+  let TODAY = new Date().toISOString().slice(0,10);              // 画面上の「今日」はデータの基準日に固定する
+  let CUR = TODAY.slice(0, 7);
+  let CATEGORIES = [];
+  const ACCOUNTS = ['三井住友銀行', 'ゆうちょ銀行'];
+  const ACCOUNT_SHORT = {'三井住友銀行': '三井住友', 'ゆうちょ銀行': 'ゆうちょ'};
+  const ACCOUNT_COLORS = ['#2c6450', '#c99a45'];
+  const MONTH_CHOICES = 36;                 // 残高の入力で選べる月の数（今月から過去へ）
+  const MAX_BALANCE = 999999999999;
+  const DEFAULT_BIG_THRESHOLD = 30000;      // 「大きな支払い」の印の仮の金額。本人が表示の設定で変えられる
+  const NONE = '__none__';                  // 「どれでもない」を選んだ印
+  const DIRECT = '__direct__';              // 枠の変更で「元のカテゴリどおり」を選んだ印
+  const CANDIDATES = {};
+  const CARD_LABEL = {olive: 'Olive', amazon_master: 'Amazonマスター'};
+  const SOURCE_LABEL = {card_alert: '利用通知', card_batch: 'まとめ通知', bank: '銀行', csv: 'カード明細', manual: '手入力'};
+  const STATUS_LABEL = {provisional: '暫定', pending: '分類待ち', auto: '自動で分類', review: '要確認', confirmed: '確認済み'};
+  const CSV_LABEL = {pending: '未照合', matched: '一致', amount_fixed: '円額を確定', alert_only: '通知のみ（明細になし）'};
+  const WEEKDAYS = '日月火水木金土';
+  const PAGES = ['overview', 'review', 'assets'];
+  // Original primitive compositions defined for this public preview; see docs/UI-PROVENANCE.md.
+  const ICONS = {
+    left: '<line x1="18" y1="12" x2="6" y2="12"/><polyline points="11,6 5,12 11,18"/>',
+    right: '<line x1="6" y1="12" x2="18" y2="12"/><polyline points="13,6 19,12 13,18"/>',
+    down: '<line x1="12" y1="5" x2="12" y2="18"/><polyline points="6,13 12,19 18,13"/>',
+    check: '<polyline points="4,13 10,18 20,5"/>',
+    food: '<circle cx="13" cy="12" r="6"/><circle cx="13" cy="12" r="3"/><line x1="3" y1="4" x2="3" y2="20"/><line x1="21" y1="4" x2="21" y2="20"/>',
+    goods: '<rect x="4" y="8" width="16" height="12"/><polyline points="8,8 8,4 16,4 16,8"/><line x1="8" y1="12" x2="8" y2="15"/><line x1="16" y1="12" x2="16" y2="15"/>',
+    home: '<polyline points="3,10 12,3 21,10"/><rect x="6" y="11" width="12" height="10"/><rect x="10" y="15" width="4" height="6"/>',
+    transport: '<rect x="3" y="5" width="18" height="13"/><rect x="6" y="8" width="5" height="5"/><rect x="13" y="8" width="5" height="5"/><circle cx="7" cy="20" r="1"/><circle cx="17" cy="20" r="1"/>',
+    hobby: '<circle cx="12" cy="12" r="9"/><line x1="7" y1="9" x2="7" y2="15"/><line x1="4" y1="12" x2="10" y2="12"/><circle cx="16" cy="9" r="1"/><circle cx="18" cy="14" r="1"/>',
+    work: '<rect x="3" y="8" width="18" height="12"/><rect x="8" y="3" width="8" height="5"/><line x1="3" y1="13" x2="21" y2="13"/><line x1="12" y1="11" x2="12" y2="15"/>',
+    medical: '<circle cx="12" cy="12" r="9"/><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/>',
+    other: '<rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><rect x="14" y="14" width="6" height="6"/>',
+    pending: '<circle cx="12" cy="12" r="9"/><line x1="12" y1="5" x2="12" y2="12"/><line x1="12" y1="12" x2="17" y2="15"/>'
+  };
+  // 表示の枠。毎月同じ並びで出し、金額がない月も消さない
+  const FRAMES = [
+    // 色は色相と明るさを散らし、白い形とのコントラストを 4:1 以上にしている
+    {key: 'food', name: '食費', color: '#c75d00'},
+    {key: 'goods', name: '生活用品', color: '#3d7f1a'},
+    {key: 'home', name: '住まい・固定費', color: '#2d48a6'},
+    {key: 'transport', name: '交通', color: '#0e86c4'},
+    {key: 'hobby', name: '趣味・娯楽', color: '#9140c8'},
+    {key: 'work', name: '学業・仕事', color: '#00796b'},
+    {key: 'medical', name: '医療・保険', color: '#d12b3b'},
+    {key: 'other', name: 'その他', color: '#737980'}
+  ];
+  const FRAME = {};
+  FRAMES.forEach(f => { FRAME[f.key] = f; });
+  const PENDING_FRAME = {key: 'pending', name: '未確定', color: '#93540e'};
+  // 元のカテゴリ → 枠。candidates のものは元のカテゴリだけでは用途が決まらないので、1件ずつ確認する
+  const CATEGORY_FRAME = {
+    '食費': {frame: 'food'},
+    '日用雑貨': {frame: 'goods'},
+    '美容・衣服': {frame: 'goods'},
+    '医療・保険': {frame: 'medical'},
+    '交通': {frame: 'transport'},
+    'クルマ': {frame: 'transport'},
+    'エンタメ': {frame: 'hobby'},
+    '水道・光熱': {frame: 'home'},
+    '住まい': {frame: 'home'},
+    '税金': {frame: 'home'},
+    '教育・教養': {candidates: ['hobby', 'work']},
+    '通信': {candidates: ['home', 'hobby', 'work']},
+    '交際費': {candidates: ['food', 'goods', 'hobby']},
+    '大型出費': {candidates: ['goods', 'home', 'hobby', 'work']},
+    'その他': {candidates: []}
+  };
+
+  let state = null;
+  const view = {
+    month: CUR,                          // 内訳で表示している月
+    openCats: {},                        // 内訳で開いている枠
+    openTx: {},                          // 内訳で詳しく開いている明細
+    queue: 'review',                     // 要確認の画面で表示している列（要確認／用途の確認）
+    cursor: {review: null, purpose: null},
+    picks: {},                           // 確定前の選択: 明細ID → {candidate, frame, ruleFuture, rulePending}
+    doneOpen: false,
+    settingsOpen: false,
+    assetMonth: CUR,
+    freshMonth: null
+  };
+
+  /* ---------- 小道具 ---------- */
+  const clone = v => JSON.parse(JSON.stringify(v));
+  const h = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+  const num = n => Math.round(n).toLocaleString('ja-JP');
+  const yen = n => '¥' + num(n);
+  const sign = n => n > 0 ? '+' : n < 0 ? '−' : '±';
+  const signedYen = n => sign(n) + yen(Math.abs(n));
+  const signedNum = n => sign(n) + num(Math.abs(n));
+  const icon = (name, cls) => `<svg class="icon${cls ? ' ' + cls : ''}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICONS[name]}</svg>`;
+  // 枠の名前は「・」の後ろでだけ折り返す
+  const frameName = f => h(f.name).replace(/・/g, '・<wbr>');
+  const frameIcon = (f, small) => `<span class="frame-icon${small ? ' is-small' : ''}${f.key === 'pending' ? ' is-pending' : ''}" style="--c:${f.color}" data-frame-icon="${f.key}">${icon(f.key)}</span>`;
+  // 支出は増えると注意の色、資産は増えると落ち着いた色
+  const spendTone = d => d > 0 ? 'is-bad' : d < 0 ? 'is-good' : 'is-flat';
+  const assetTone = d => d > 0 ? 'is-good' : d < 0 ? 'is-bad' : 'is-flat';
+  function shiftMonth(ym, d) {
+    let y = +ym.slice(0, 4), m = +ym.slice(5, 7) + d;
+    while (m < 1) { m += 12; y--; }
+    while (m > 12) { m -= 12; y++; }
+    return y + '-' + String(m).padStart(2, '0');
+  }
+  const monthLabel = ym => `${+ym.slice(0, 4)}年${+ym.slice(5, 7)}月`;
+  const monthShort = ym => `${+ym.slice(5, 7)}月`;
+  const monthOf = t => (t.used_at || '').slice(0, 7);
+  const byUsedAt = (a, b) => (a.used_at || '') < (b.used_at || '') ? -1 : (a.used_at || '') > (b.used_at || '') ? 1 : 0;
+  function percent(diff, base) {
+    if (!base) return '';
+    return sign(diff) + Math.abs(diff / base * 100).toFixed(1) + '%';
+  }
+  function man(v) {
+    if (!v) return '0';
+    return (Math.round(v / 1000) / 10).toLocaleString('ja-JP') + '万';
+  }
+  function fmtDateTime(s) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/.exec(s || '');
+    if (!m) return s || '';
+    const wd = WEEKDAYS[new Date(+m[1], +m[2] - 1, +m[3]).getDay()];
+    return `${+m[2]}/${+m[3]}(${wd})` + (m[4] ? ` ${m[4]}:${m[5]}` : '');
+  }
+  function amountText(t) {
+    if (typeof t.amount_jpy === 'number') return yen(t.amount_jpy)+(t.valuation?.estimated?'（概算）':'');
+    if (t.amount_foreign != null) return `${t.amount_foreign} ${t.currency || ''}（円額未確定）`;
+    return '金額不明';
+  }
+  const payLabel = t => CARD_LABEL[t.card] || SOURCE_LABEL[t.source] || '';
+  function matchText(t) {
+    if (t.match_status === 'matched') {
+      const c = CANDIDATES[t.detail_msg_id];
+      return '照合済み' + (c ? `（${c.description}）` : '');
+    }
+    if (t.match_status === 'ambiguous') return `候補が${(t.candidate_msg_ids || []).length}件（未選択）`;
+    if (t.match_status === 'no_candidate') return '見つかりませんでした';
+    if (t.match_status === 'not_needed') return '照合不要';
+    return '—';
+  }
+  function focusData(attr, value) {
+    const list = document.querySelectorAll(`[data-${attr}]`);
+    for (const el of list) {
+      if (el.getAttribute('data-' + attr) === value && !el.disabled) { el.focus({preventScroll: true}); return true; }
+    }
+    return false;
+  }
+
+  /* ---------- 保存 ---------- */
+  const isFrameKey = k => Object.prototype.hasOwnProperty.call(FRAME, k);
+  let revision = null, pendingRequest = null, busy = false;
+  function showWarning(text) {
+    document.getElementById('storage-warning-text').textContent = text;
+    document.getElementById('storage-warning').hidden = false;
+  }
+  function hideWarning() { document.getElementById('storage-warning').hidden = true; }
+  function setBusy(value) {
+    busy = value;
+    document.getElementById('main').inert = value || !state || !!pendingRequest;
+    document.querySelector('.nav').inert = value || !state || !!pendingRequest;
+    for (const id of ['cloud-refresh','cloud-retry']) document.getElementById(id).disabled = value;
+  }
+  function rpc(method, arg) {
+    return new Promise((resolve,reject) => {
+      if (!window.google || !google.script || !google.script.run) { reject(new Error('NOT_CONNECTED')); return; }
+      let settled = false;
+      const timer = setTimeout(() => { if (!settled) { settled = true; reject(new Error('TIMEOUT')); } }, 30000);
+      const done = (fn,v) => { if (!settled) { settled=true;clearTimeout(timer);fn(v); } };
+      const runner=google.script.run.withSuccessHandler(r=>done(resolve,r)).withFailureHandler(e=>done(reject,e));
+      if(method==='readLedger') runner.readLedger(); else if(method==='classificationPending')runner.classificationPending(); else if(method==='previewClassification')runner.previewClassification(arg); else if(method==='previewCsv13')runner.previewCsv13(arg); else if(method==='previewCsvImport')runner.previewCsvImport(arg); else runner.mutateLedger(arg);
+    });
+  }
+  function acceptResponse(r) {
+    if (!r || r.ok !== true || !Number.isSafeInteger(r.revision) || !r.state || !Array.isArray(r.state.transactions)) throw new Error('INVALID_RESPONSE');
+    state = r.state; revision = r.revision;
+    TODAY=state.as_of; CUR=TODAY.slice(0,7);
+    Object.assign(FIXTURE,state.metadata,{as_of:TODAY});CATEGORIES=state.metadata.categories.slice();
+    Object.keys(CANDIDATES).forEach(k=>delete CANDIDATES[k]);
+    state.metadata.detail_candidates.forEach(c=>CANDIDATES[c.msg_id]=c);
+    document.getElementById('cloud-mode').textContent=r.mode==='demo'?'架空デモ台帳（クラウド保存）':'本人用台帳';
+    document.getElementById('data-note').textContent=r.mode==='demo'?'表示しているデータはすべて架空です。':'保存先は本人用のGoogleスプレッドシートです。';
+  }
+  async function refreshCloud() {
+    if(busy)return;
+    if(pendingRequest) { showWarning('保存結果が未確認です。「同じ保存の結果を確認」を押してください。未確認のまま再読込みすると依頼IDは失われます。');return; }
+    setBusy(true);
+    try { acceptResponse(await rpc('readLedger'));hideWarning();view.month=CUR;view.assetMonth=defaultAssetMonth();renderAll(); }
+    catch(e) {showWarning('台帳を読み込めません。未接続・認可・保存先設定を確認し「再読込み」を押してください。表示が残る場合は前回取得時の内容です。');}
+    finally {setBusy(false);}
+  }
+  async function sendCommand(command) {
+    if(busy||!state||pendingRequest)return false;
+    const id=crypto.randomUUID();
+    pendingRequest={requestId:id,expectedRevision:revision,command};
+    return retryPending();
+  }
+  async function retryPending() {
+    if(busy||!pendingRequest)return false;
+    setBusy(true);document.getElementById('cloud-retry').hidden=false;
+    try {
+      const r=await rpc('mutateLedger',pendingRequest);acceptResponse(r);pendingRequest=null;
+      document.getElementById('cloud-retry').hidden=true;hideWarning();renderAll();return true;
+    } catch(e) {
+
+      const msg=String(e && (e.message||e));
+      if(msg.includes('LEGACY_REQUEST_RECHECK')) {
+        pendingRequest=null;document.getElementById('cloud-retry').hidden=true;
+        showWarning('旧版の保存依頼は安全に再実行できません。追加保存は行っていません。「再読込み」で台帳の保存済み内容を確認し、必要な変更だけ選び直してください。');
+      } else if(msg.includes('CONFLICT')) {
+        pendingRequest=null;document.getElementById('cloud-retry').hidden=true;
+        showWarning('別の端末で更新されています。変更は保存していません。「再読込み」後に選び直してください。');
+      } else if(/INVALID_|NOT_FOUND|NOT_EDITABLE|NOT_REOPENABLE|DETAIL_PRECEDENCE|DETAIL_ALREADY_USED|UNKNOWN_COMMAND|REQUEST_ID_REUSED|CSV_|CLASSIFY_/.test(msg)) {
+        pendingRequest=null;document.getElementById('cloud-retry').hidden=true;
+        showWarning('入力を保存できませんでした。選択を確認し直してください。詳細の重複などの場合は再読込みしてください。');
+      } else {
+        showWarning('保存の完了を確認できません。成功扱いにはしていません。「同じ保存の結果を確認」で同じ依頼IDを照合・再試行できます。画面を閉じた場合は再読込みして内容を確認してください。');
+      }
+      return false;
+    } finally {setBusy(false);}
+  }
+  document.getElementById('cloud-refresh').addEventListener('click',refreshCloud);
+  document.getElementById('cloud-retry').addEventListener('click',retryPending);
+  window.addEventListener('beforeunload',e=>{if(pendingRequest){e.preventDefault();e.returnValue='';}});
+
+  /* ---------- 集計・枠 ---------- */
+  // 集計は子を持たない行だけを数える
+  function leaves() {
+    const parents = new Set();
+    state.transactions.forEach(t => { if (t.parent_id) parents.add(t.parent_id); });
+    return state.transactions.filter(t => !parents.has(t.id));
+  }
+  const rowsOf = month => leaves().filter(t => monthOf(t) === month);
+  const sum = list => list.reduce((a, t) => a + (typeof t.amount_jpy === 'number' ? t.amount_jpy : 0), 0);
+  const findTx = id => state.transactions.find(t => t.id === id);
+  function directFrame(t) {
+    const m = t.category && CATEGORY_FRAME[t.category];
+    return m && m.frame ? m.frame : null;
+  }
+  // 明細の枠。本人やルールで決めた枠 → 元のカテゴリから決まる枠 → なければ未確定（null）
+  const frameOf = t => t.frame || directFrame(t);
+  const needsPurpose = t => t.status !== 'review' && !!t.category && !frameOf(t);
+  const reviewQueue = () => leaves().filter(t => t.status === 'review').sort(byUsedAt);
+  const purposeQueue = () => leaves().filter(needsPurpose).sort(byUsedAt);
+  const queueOf = kind => kind === 'purpose' ? purposeQueue() : reviewQueue();
+  function suggested(t) {
+    const m = t.category && CATEGORY_FRAME[t.category];
+    return m && m.candidates ? m.candidates : [];
+  }
+  function isBig(t) {
+    const th = state.settings.bigThreshold;
+    return t.category === '大型出費' || (th > 0 && typeof t.amount_jpy === 'number' && t.amount_jpy >= th);
+  }
+  function frameSource(t) {
+    if (t.status === 'provisional') return 'モデルの暫定分類';
+    if (t.frame_by === 'worker') return '根拠付き自動分類';
+    if (t.status === 'review') return '要確認';
+    if (t.frame_by === 'rule') return '店のルール（本人が許可）';
+    if (t.frame) return '本人が選択';
+    if (directFrame(t)) return '元のカテゴリから';
+    return '用途の確認待ち';
+  }
+  const ruleOf = key => state.rules.find(r => r.merchant_key === key) || null;
+  // 店のルールを当てはめてよい明細: 同じ店・枠が未確定・詳細メールで判断する明細ではない
+  function ruleTargets(t) {
+    return leaves().filter(x => x.id !== t.id && x.merchant_key === t.merchant_key && !frameOf(x)
+      && (x.status === 'review' || needsPurpose(x)) && !x.detail_msg_id && x.match_status !== 'ambiguous');
+  }
+  function txMonths() {
+    const set = new Set([CUR]);
+    leaves().forEach(t => { if (monthOf(t)) set.add(monthOf(t)); });
+    return Array.from(set).sort();
+  }
+
+  function balanceOf(month, account) {
+    const a = state.assets.find(x => x.month === month && x.account === account);
+    return a ? a.balance : null;
+  }
+  function monthInfo(month) {
+    const values = ACCOUNTS.map(acc => balanceOf(month, acc));
+    const entered = values.filter(v => v != null);
+    const complete = entered.length === ACCOUNTS.length;
+    const beforeEnd = month >= CUR;
+    return {month, values, any: entered.length > 0, complete, beforeEnd,
+      total: entered.reduce((a, b) => a + b, 0),
+      provisional: entered.length > 0 && (!complete || beforeEnd)};
+  }
+  // 記録のある最初の月から先月まで（入力のない月も「未入力」として残す）。今月は入力があるときだけ含める
+  function assetSeries() {
+    const months = state.assets.map(a => a.month).sort();
+    if (!months.length) return [];
+    let last = shiftMonth(CUR, -1);
+    if (months[months.length - 1] > last) last = months[months.length - 1];
+    const out = [];
+    for (let m = months[0]; m <= last; m = shiftMonth(m, 1)) out.push(monthInfo(m));
+    return out;
+  }
+  function lastComplete(series) {
+    for (let i = series.length - 1; i >= 0; i--) if (series[i].complete) return series[i];
+    return null;
+  }
+  // 月末を過ぎたのに、そろっていない月
+  const pendingMonths = () => assetSeries().filter(s => s.month < CUR && !s.complete);
+  function defaultAssetMonth() {
+    const pending = pendingMonths();
+    return pending.length ? pending[pending.length - 1].month : CUR;
+  }
+
+  /* ---------- 画面の切り替え ---------- */
+  function currentPage() {
+    const p = (location.hash || '').slice(1);
+    return PAGES.includes(p) ? p : 'overview';
+  }
+  function scrollPageTop() {
+    const scroller=document.getElementById('app-scroll');
+    if(window.matchMedia('(max-width:760px)').matches && scroller)scroller.scrollTo(0,0);
+    else window.scrollTo(0,0);
+  }
+  function showPage(focus) {
+    const page = currentPage();
+    PAGES.forEach(p => { document.getElementById('page-' + p).hidden = p !== page; });
+    document.querySelectorAll('[data-nav]').forEach(a => {
+      if (a.dataset.nav === page) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
+    });
+    if (page === 'assets') drawChart();
+    if (focus) {
+      scrollPageTop();
+      const h1 = document.querySelector(`#page-${page} h1`);
+      if (h1) h1.focus({preventScroll: true});
+    }
+  }
+  function goTo(page) {
+    if (currentPage() === page) { showPage(true); return; }
+    location.hash = page;
+  }
+  function renderBadge() {
+    const n = reviewQueue().length;
+    const badge = document.getElementById('review-badge');
+    badge.hidden = n === 0;
+    badge.innerHTML = n ? `${n}<span class="sr-only">件</span>` : '';
+  }
+  function renderAll() {
+    renderCsv();
+    renderClassification();
+    renderMailStatus();
+    renderBadge();
+    renderOverview();
+    renderReview();
+    renderAssets();
+    showPage(false);
+  }
+
+  /* ---------- 今月の内訳 ---------- */
+  function renderOverview() {
+    const month = view.month;
+    const prev = shiftMonth(month, -1);
+    const rows = rowsOf(month);
+    const prevRows = rowsOf(prev);
+    const hasPrev = prevRows.length > 0;
+    const total = sum(rows);
+    const prevTotal = sum(prevRows);
+    const months = txMonths();
+    const index = months.indexOf(month);
+    const unfixed = rows.filter(t => typeof t.amount_jpy !== 'number').length;
+    const estimatedJpy = rows.filter(t => t.valuation?.estimated===true).length;
+    // 枠は毎月同じ並びで出す。未確定は並びを動かさないよう末尾に置く
+    const groups = FRAMES.map(f => ({frame: f, cur: rows.filter(t => frameOf(t) === f.key), prev: prevRows.filter(t => frameOf(t) === f.key)}));
+    const pendCur = rows.filter(t => !frameOf(t)), pendPrev = prevRows.filter(t => !frameOf(t));
+    if (pendCur.length || pendPrev.length) groups.push({frame: PENDING_FRAME, cur: pendCur, prev: pendPrev, pending: true});
+    const max = Math.max(1, ...groups.map(g => sum(g.cur)));
+    const diff = total - prevTotal;
+
+    const head = `<div class="page-head">
+      <h1 tabindex="-1">${month === CUR ? '今月の内訳' : monthShort(month) + 'の内訳'}</h1>
+      <div class="month-switch" role="group" aria-label="表示する月">
+        <button type="button" class="icon-button" data-month-step="-1" aria-label="前の月"${index <= 0 ? ' disabled' : ''}>${icon('left')}</button>
+        <span class="month-current num" aria-live="polite">${monthLabel(month)}</span>
+        <button type="button" class="icon-button" data-month-step="1" aria-label="次の月"${index >= months.length - 1 ? ' disabled' : ''}>${icon('right')}</button>
+      </div>
+    </div>`;
+
+    const spend = `<section class="card spend-card" aria-labelledby="spend-label">
+      <h2 class="card-label" id="spend-label">${monthShort(month)}の支出</h2>
+      <p class="big num">${yen(total)}</p>${estimatedJpy?`<p class="note">参考レートによる概算 ${estimatedJpy}件を含みます。</p>`:""}
+      <p class="compare num">${hasPrev
+        ? `<strong class="${spendTone(diff)}">前月比 ${signedYen(diff)}${prevTotal ? `（${percent(diff, prevTotal)}）` : ''}</strong><span class="muted">${monthShort(prev)} ${yen(prevTotal)}</span>`
+        : '<span class="muted">前月の記録はありません</span>'}</p>
+      ${unfixed ? `<p class="note">円額が未確定の外貨利用${unfixed}件は含みません</p>` : ''}
+      ${rows.some(t=>t.mail_source_id&&!(t.csv_bill_ids||[]).length) ? '<p class="note">利用通知の未確定額を含みます。支払月の請求合計ではありません。</p>' : ''}
+    </section>`;
+
+    const list = groups.map((g, i) => {
+      const f = g.frame;
+      const cur = sum(g.cur), pre = sum(g.prev), d = cur - pre;
+      const empty = !g.cur.length && !g.prev.length;
+      const open = !empty && !!view.openCats[f.key];
+      const bigCount = g.cur.filter(isBig).length;
+      const tags = bigCount ? `<span class="tag is-big">大きな支払い ${bigCount}件</span>` : '';
+      let meta = '';
+      if (g.pending) {
+        const r = g.cur.filter(t => t.status === 'review').length;
+        const p = g.cur.length - r;
+        meta = `<span class="cat-meta">${[r ? `要確認 ${r}件` : '', p ? `用途の確認 ${p}件` : ''].filter(Boolean).join('・') || 'この月はありません'}</span>`;
+      }
+      const cells = `<span class="cat-name">${frameIcon(f)}<span class="cat-stack"><span class="cat-title"><span class="cat-label">${frameName(f)}</span>${tags}</span>${meta}`
+        + `${cur > 0 && !g.pending ? `<span class="bar" style="--c:${f.color}" aria-hidden="true"><i style="width:${(cur / max * 100).toFixed(1)}%"></i></span>` : ''}</span></span>`
+        + `<span class="cat-amount num">${yen(cur)}</span>`
+        + `<span class="cat-diff num ${hasPrev ? spendTone(d) : 'is-flat'}">${hasPrev ? signedYen(d) : '—'}</span>`;
+      const cls = 'cat-item' + (empty ? ' is-empty' : '') + (g.pending ? ' is-pending' : '');
+      if (empty) return `<li class="${cls}" data-row="${f.key}"><div class="cat-row">${cells}<span></span></div></li>`;
+      const label = `${f.name} ${yen(cur)}、${hasPrev ? monthShort(prev) + 'との差 ' + signedYen(d) : '前月の記録なし'}${bigCount ? `、大きな支払い${bigCount}件` : ''}`;
+      return `<li class="${cls}" data-row="${f.key}"><button type="button" class="cat-row" data-cat="${f.key}" aria-expanded="${open}"${open ? ` aria-controls="cat-panel-${i}"` : ''} aria-label="${h(label)}">${cells}${icon('down')}</button>${open ? catPanel(g, i, month, prev, hasPrev) : ''}</li>`;
+    }).join('');
+
+    const catCard = `<section class="card cat-card" aria-labelledby="cat-title">
+      <h2 id="cat-title">枠別</h2>
+      <div class="cat-cols" aria-hidden="true"><span>枠</span><span>${monthShort(month)}</span><span>${hasPrev ? monthShort(prev) + 'との差' : '前月との差'}</span><span></span></div>
+      <ul class="cat-list">${list}</ul>
+    </section>`;
+
+    document.getElementById('page-overview').innerHTML = head + `<div class="top-grid">${spend}${assetCard()}</div>` + catCard + settingsCard();
+  }
+  function catPanel(g, i, month, prev, hasPrev) {
+    const cur = sum(g.cur), pre = sum(g.prev), d = cur - pre;
+    const compare = hasPrev
+      ? `<p class="cat-compare num">${monthShort(prev)} ${yen(pre)} → ${monthShort(month)} ${yen(cur)}${pre ? ` <span class="${spendTone(d)}">（${percent(d, pre)}）</span>` : ''}</p>`
+      : '';
+    const items = g.cur.length
+      ? `<ul class="tx-list">${g.cur.slice().sort(byUsedAt).map(txItem).join('')}</ul>`
+      : '<p class="empty-note">この月の明細はありません。</p>';
+    return `<div class="cat-panel" id="cat-panel-${i}">${compare}${items}</div>`;
+  }
+  function txItem(t) {
+    const open = !!view.openTx[t.id];
+    const tags = (t.status === 'provisional' ? '<span class="tag">暫定</span>' : t.status === 'auto' ? '<span class="tag">自動</span>' : t.status === 'review' ? '<span class="tag is-warn">要確認</span>'
+      : needsPurpose(t) ? '<span class="tag is-warn">用途の確認</span>'
+      : t.status === 'confirmed' || t.frame ? '<span class="tag">確認済み</span>'
+      : t.status === 'pending' ? '<span class="tag">分類待ち</span>' : '')
+      + (t.mail_source_id&&!(t.csv_bill_ids||[]).length ? '<span class="tag">請求未確定</span>' : '')
+      + (isBig(t) ? '<span class="tag is-big">大きな支払い</span>' : '');
+    const sub = [fmtDateTime(t.used_at), t.description, needsPurpose(t) ? '元：' + t.category : ''].filter(Boolean).join(' · ');
+    return `<li class="tx"><button type="button" class="tx-row" data-tx="${h(t.id)}" aria-expanded="${open}">`
+      + `<span class="tx-line"><span class="tx-merchant">${h(t.merchant_raw || '（店名なし）')}${tags}</span><span class="tx-end"><span class="num">${h(amountText(t))}</span>${icon('down')}</span></span>`
+      + `<span class="tx-sub">${h(sub)}</span></button>${open ? txDetail(t) : ''}</li>`;
+  }
+  // 明細を押したときだけ出す詳しい情報。元のカテゴリと枠の決まり方を残す
+  function txDetail(t) {
+    const fk = frameOf(t);
+    const rows = [
+      ['支払い', payLabel(t) || '—'],
+      ['元のカテゴリ', t.category || '未分類'],
+      ['枠', `${fk ? FRAME[fk].name : '未確定'} · ${frameSource(t)}`],
+      ['元の詳細メール照合', matchText(t)],
+      ['カード明細', (t.csv13_source_refs||[]).length?'13列CSV対応済み・請求確定は未確認':CSV_LABEL[t.csv_status] || '未照合'],
+      ...(t.mail_source_id ? [['通知', t.source==='card_alert'?'利用速報':'利用明細通知'],['利用・請求の状態', (t.csv_bill_ids||[]).length?'CSV照合済み':'利用通知のみ・請求未確定']] : []),
+      ['判断の根拠', t.evidence || '—'],
+      ['本人メモ', (t.owner_notes||[]).map(n=>n.text).join('\n') || '—'],
+      ['判断スコア（確率ではありません）', t.confidence == null ? '—' : String(t.confidence)]
+    ];
+    if(!(t.purchase_details||[]).length)rows.push(['購入メールの補完','未検索（補完の検索記録なし）'+(t.match_status==='matched'?'・従来の照合情報あり':'')]);
+    for(const d of t.purchase_details||[])rows.push(['購入メールの補完',({saved:'保存済み',match_uncertain:'照合未確定',mail_not_found:'メール未発見'})[d.status]||'未反映'],['補完した購入内容',d.description||'—'],['補完の根拠',d.evidence||'—'],['根拠メールID',(d.source_message_ids||[]).join(' / ')||'—']);
+    if(t.valuation)rows.push(['円額の根拠',t.valuation.estimated?'参考レートによる概算':'CSV記載の円額・請求確定とは別'],['換算資料',t.valuation.source_ref||t.valuation.source||'—'],['レート日',t.valuation.rate_date||t.valuation.conversion_date_raw||'—']);
+    if (t.amount_foreign != null) rows.splice(1, 0, ['外貨', `${t.amount_foreign} ${t.currency || ''}`]);
+    let action = '';
+    if (t.status === 'review') {
+      action = `<button type="button" class="text-link" data-goto-queue="review" data-goto-id="${h(t.id)}">要確認で分類する ›</button>`;
+    } else if (needsPurpose(t)) {
+      action = `<button type="button" class="text-link" data-goto-queue="purpose" data-goto-id="${h(t.id)}">用途を確認する ›</button>`;
+    } else {
+      const direct = directFrame(t);
+      const selected = t.frame || (direct ? DIRECT : '');
+      const options = (direct ? `<option value="${DIRECT}"${selected === DIRECT ? ' selected' : ''}>元のカテゴリどおり（${h(FRAME[direct].name)}）</option>` : '')
+        + FRAMES.map(f => `<option value="${f.key}"${selected === f.key ? ' selected' : ''}>${h(f.name)}</option>`).join('');
+      const sid = 'frame-select-' + t.id.replace(/[^a-zA-Z0-9_-]/g, '_');
+      action = `<div class="frame-change"><label for="${sid}">枠を変える（この明細だけ）</label><div class="frame-change-row"><select id="${sid}" data-frame-select="${h(t.id)}">${options}</select>${t.category_edits?.at(-1)?.kind === 'correction' ? `<button type="button" class="button secondary compact" data-category-undo="${h(t.id)}">直前の訂正を戻す</button>` : ''}</div></div>`;
+    }
+    action+=`<details><summary>本人メモを追記</summary><form data-owner-note="${h(t.id)}"><label>追記する内容<textarea name="note" maxlength="500" rows="3" placeholder="商品名や用途など。元の説明はそのまま残ります。" required></textarea></label><button class="button secondary compact" type="submit">メモを追記して保存</button></form></details>`;
+    return `<div class="tx-detail"><dl>${rows.map(r => `<dt>${h(r[0])}</dt><dd>${h(r[1]).replaceAll('\n','<br>')}</dd>`).join('')}</dl>${action}</div>`;
+  }
+  async function saveOwnerNote(form){
+    if(!form.reportValidity())return;
+    const text=String(new FormData(form).get('note')||'');
+    if(await sendCommand({type:'appendOwnerNote',id:form.dataset.ownerNote,text}))toast('本人メモを保存しました');
+  }
+  async function changeFrame(id,value) {
+    if(await sendCommand({type:'changeFrame',id,frame:value})) {focusData('frame-select',id);toast('分類を保存しました',id);}
+  }
+  function settingsCard() {
+    return `<details class="card settings-card" id="settings-card"${view.settingsOpen ? ' open' : ''}><summary>表示の設定</summary>
+      <form class="settings-body" id="settings-form" novalidate>
+        <label for="big-threshold">「大きな支払い」の印を付ける金額</label>
+        <div class="settings-row"><div class="input-wrap"><input type="text" id="big-threshold" inputmode="numeric" autocomplete="off" value="${num(state.settings.bigThreshold)}" aria-describedby="big-threshold-note"><span class="unit">円以上</span></div><button type="submit" class="button secondary compact">変更</button></div>
+        <p class="small muted" id="big-threshold-note">1回の支払いがこの金額以上なら印を付けます（仮の値。最初は30,000円）。元のカテゴリが「大型出費」の明細には、金額にかかわらず印を付けます。0にすると金額での印は付けません。</p>
+        <p class="settings-error" id="settings-error" role="alert"></p>
+      </form>
+    </details>`;
+  }
+  async function saveSettings(form) {
+    const r=parseYen(form.querySelector('#big-threshold').value);
+    if(r.error||r.empty){document.getElementById('settings-error').textContent='金額を数字で入力してください。';return;}
+    if(await sendCommand({type:'settings',value:r.value}))toast('表示の設定を保存しました');
+  }
+  function assetCard() {
+    const series = assetSeries();
+    const latest = lastComplete(series);
+    const more = `<span class="more">資産を見る${icon('right')}</span>`;
+    if (!latest) {
+      return `<a class="card asset-card" href="#assets"><span class="asset-text"><span class="card-label">資産</span><span class="asset-sub muted">月末残高はまだ入力されていません</span></span>${more}</a>`;
+    }
+    const prev = monthInfo(shiftMonth(latest.month, -1));
+    const d = prev.complete ? latest.total - prev.total : null;
+    return `<a class="card asset-card" href="#assets">
+      <span class="asset-text">
+        <span class="card-label">資産（${monthShort(latest.month)}${latest.beforeEnd ? '・月末前' : '末'}）</span>
+        <span class="asset-total num">${yen(latest.total)}</span>
+        ${d == null ? '' : `<span class="asset-sub num ${assetTone(d)}">前月比 ${signedYen(d)}</span>`}
+      </span>
+      ${miniChart(series)}
+      ${more}
+    </a>`;
+  }
+  function miniChart(series) {
+    const list = series.slice(-6);
+    if (!list.length) return '';
+    const W = 132, H = 56, slot = W / list.length, bw = Math.min(14, slot * 0.6);
+    const max = Math.max(1, ...list.map(s => s.total));
+    let out = `<svg class="mini-chart" viewBox="0 0 ${W} ${H}" aria-hidden="true" focusable="false">`;
+    list.forEach((s, i) => {
+      const cx = slot * (i + 0.5);
+      let base = 0;
+      s.values.forEach((v, k) => {
+        if (!v) return;
+        const y0 = H - base / max * (H - 4), y1 = H - (base + v) / max * (H - 4);
+        out += `<rect x="${(cx - bw / 2).toFixed(1)}" y="${y1.toFixed(1)}" width="${bw.toFixed(1)}" height="${(y0 - y1).toFixed(1)}" fill="${ACCOUNT_COLORS[k]}"${s.provisional ? ' opacity=".5"' : ''}/>`;
+        base += v;
+      });
+    });
+    return out + '</svg>';
+  }
+
+  /* ---------- 要確認・用途の確認 ---------- */
+  function confirmedList() {
+    return state.transactions
+      .filter(t => state.history[t.id])
+      .sort((a, b) => (state.history[b.id].at || '').localeCompare(state.history[a.id].at || ''));
+  }
+  function renderReview() {
+    const root = document.getElementById('page-review');
+    const rq = reviewQueue(), pq = purposeQueue();
+    const kind = view.queue === 'purpose' ? 'purpose' : 'review';
+    const queue = kind === 'purpose' ? pq : rq;
+    const done = confirmedList();
+    if (!queue.some(t => t.id === view.cursor[kind])) view.cursor[kind] = queue.length ? queue[0].id : null;
+    const head = '<div class="page-head"><h1 tabindex="-1">要確認</h1></div>';
+    const switcher = `<div class="queue-switch" role="group" aria-label="確認する一覧">
+      <button type="button" data-queue="review" aria-pressed="${kind === 'review'}">要確認<span class="count">${rq.length}</span></button>
+      <button type="button" data-queue="purpose" aria-pressed="${kind === 'purpose'}">用途の確認<span class="count">${pq.length}</span></button>
+    </div>`;
+    const doneHTML = done.length
+      ? `<details class="card done-card"${view.doneOpen ? ' open' : ''}><summary>確認済み ${done.length}件</summary><ul class="done-list">${done.map(doneItem).join('')}</ul></details>`
+      : '';
+    if (!queue.length) {
+      const other = kind === 'review' ? pq.length : rq.length;
+      const next = other
+        ? `<button type="button" class="button" data-queue="${kind === 'review' ? 'purpose' : 'review'}">${kind === 'review' ? '用途の確認' : '要確認'} ${other}件へ</button>`
+        : '<a class="button" href="#overview">内訳を見る</a>';
+      const title = kind === 'review' ? '要確認はありません' : '用途の確認はありません';
+      const text = kind === 'review' ? '選んだ分類は、内訳に反映しています。' : '選んだ用途は、内訳の枠に反映しています。';
+      root.innerHTML = head + switcher + `<div class="review-empty"><section class="card complete-card"><div class="complete-mark">${icon('check')}</div><h2 id="review-focus" tabindex="-1">${title}</h2><p class="muted">${text}</p>${next}</section>${doneHTML}</div>`;
+      return;
+    }
+    const t = queue.find(x => x.id === view.cursor[kind]);
+    const steps = queue.length <= 12
+      ? `<div class="steps" role="group" aria-label="確認する明細を選ぶ">${queue.map((x, i) => `<button type="button" class="step" data-step-id="${h(x.id)}"${x.id === t.id ? ' aria-current="step"' : ''} aria-label="${i + 1}件目 ${h(x.merchant_raw)}">${i + 1}</button>`).join('')}</div>`
+      : `<p class="small muted">${queue.indexOf(t) + 1}件目</p>`;
+    const progress = `<section class="card progress-card" aria-label="進み具合"><p class="remaining">残り<strong class="num">${queue.length}</strong>件</p>${steps}</section>`;
+    root.innerHTML = head + switcher + `<div class="review-layout">${progress}${reviewForm(t, kind, queue.length)}${doneHTML}</div>`;
+    updateReviewState();
+  }
+  function choice(name, value, checked, label) {
+    return `<label class="choice"><input type="radio" name="${name}" value="${h(value)}"${checked ? ' checked' : ''}><span>${label}</span></label>`;
+  }
+  function reviewForm(t, kind, total) {
+    const pick = view.picks[t.id] || (view.picks[t.id] = {candidate: '', frame: '', ruleFuture: false, rulePending: false});
+    const ambiguous = t.match_status === 'ambiguous';
+    const ids = t.candidate_msg_ids || [];
+    const hints = suggested(t);
+    let note;
+    if (kind === 'purpose') {
+      note = `元のカテゴリは「${t.category}」です。カテゴリだけでは枠が決まらないので、用途を選んでください。`;
+    } else {
+      note = ambiguous ? `同じ金額の詳細メールが${ids.length}件あります。どの購入か選んでください。`
+        : t.match_status === 'matched' ? '詳細メールと照合済みです。'
+        : t.match_status === 'no_candidate' ? '詳細メールは見つかりませんでした。店名と内容から選んでください。' : '';
+    }
+    const candidates = ambiguous ? `<fieldset class="field-group"><legend>① どの購入でしたか</legend><div class="candidate-grid">`
+      + ids.map(id => {
+        const c = CANDIDATES[id];
+        return choice('candidate', id, pick.candidate === id, `<strong>${h(c ? c.description : '内容不明のメール')}</strong>${c && typeof c.amount_jpy === 'number' ? `<small class="num">${yen(c.amount_jpy)}</small>` : ''}`);
+      }).join('')
+      + choice('candidate', NONE, pick.candidate === NONE, '<strong>どれでもない</strong><small>詳細メールを紐づけずに分類します</small>')
+      + '</div></fieldset>' : '';
+    const frames = `<fieldset class="field-group"><legend>${ambiguous ? '② ' : ''}枠</legend><div class="frame-grid">`
+      + FRAMES.map(f => choice('frame', f.key, pick.frame === f.key,
+        `${frameIcon(f)}<span class="choice-text">${frameName(f)}${hints.includes(f.key) ? '<small>候補</small>' : ''}</span>`)).join('')
+      + '</div></fieldset>';
+    const targets = ruleTargets(t).length;
+    const ruleBox = `<div class="rule-box" id="rule-box" hidden>
+      <label class="check"><input type="checkbox" name="rule-future"${pick.ruleFuture ? ' checked' : ''}><span>「${h(t.merchant_raw)}」の今後の明細も、選んだ枠にする</span></label>
+      ${targets ? `<label class="check"><input type="checkbox" name="rule-pending"${pick.rulePending ? ' checked' : ''}><span>確認待ちの同じ店の明細（${targets}件）にも当てはめる</span></label>` : ''}
+    </div>`;
+    return `<form class="card review-card" id="review-form" data-id="${h(t.id)}" data-kind="${kind}" novalidate>
+      <div class="review-top">
+        <div>
+          <p class="review-meta">${h([fmtDateTime(t.used_at), payLabel(t)].filter(Boolean).join(' · '))}</p>
+          <h2 class="review-merchant" id="review-focus" tabindex="-1">${h(t.merchant_raw || '（店名なし）')}</h2>
+          ${t.description ? `<p class="review-desc">${h(t.description)}</p>` : ''}
+        </div>
+        <p class="review-amount num">${h(amountText(t))}${isBig(t) ? '<span class="tag is-big">大きな支払い</span>' : ''}</p>
+      </div>
+      ${note ? `<p class="match-note">${h(note)}</p>` : ''}
+      ${t.evidence ? `<p class="evidence">判断の根拠：${h(t.evidence)}</p>` : ''}
+      ${candidates}${frames}${ruleBox}
+      <p class="hint" id="review-hint" aria-live="polite"></p>
+      <div class="review-actions">
+        ${total > 1 ? '<button type="button" class="button secondary" data-skip>後で</button>' : ''}
+        <button type="submit" class="button" id="confirm-button">この枠で確定</button>
+      </div>
+    </form>`;
+  }
+  // 店のルールを選べるのは、詳細メールで判断しない明細だけ（詳細メールがあれば毎回中身で判断する）
+  function ruleAllowed(t, pick) {
+    if (t.detail_msg_id) return false;
+    if (t.match_status === 'ambiguous') return pick.candidate === NONE;
+    return true;
+  }
+  function updateReviewState() {
+    const form = document.getElementById('review-form');
+    if (!form) return;
+    const t = findTx(form.dataset.id);
+    const pick = view.picks[t.id];
+    const needCandidate = t.match_status === 'ambiguous' && !pick.candidate;
+    const hasFrame = isFrameKey(pick.frame);
+    const ready = hasFrame && !needCandidate;
+    document.getElementById('confirm-button').disabled = !ready;
+    document.getElementById('rule-box').hidden = !ruleAllowed(t, pick);
+    document.getElementById('review-hint').textContent = ready ? `「${FRAME[pick.frame].name}」で確定します。`
+      : needCandidate && !hasFrame ? '購入内容と枠を選ぶと確定できます。'
+      : needCandidate ? '購入内容を選ぶと確定できます。' : '枠を選ぶと確定できます。';
+  }
+  function doneItem(x) {
+    const hist = state.history[x.id];
+    const f = FRAME[frameOf(x)] || PENDING_FRAME;
+    const c = x.detail_msg_id && CANDIDATES[x.detail_msg_id];
+    const rule = ruleOf(x.merchant_key);
+    const notes = [];
+    if (rule && rule.frame_from === x.id && rule.frame) notes.push(`今後も同じ店は「${FRAME[rule.frame].name}」`);
+    if (hist.applied.length) notes.push(`同じ店の${hist.applied.length}件にも適用`);
+    const sub = [fmtDateTime(x.used_at), c ? c.description : x.description, x.category ? '元：' + x.category : '', ...notes].filter(Boolean).join(' · ');
+    return `<li class="done-item"><div><p><strong>${h(x.merchant_raw)}</strong> <span class="num">${h(amountText(x))}</span> → <span class="done-frame">${frameIcon(f, true)}${h(f.name)}</span></p><p class="small muted">${h(sub)}</p></div><button type="button" class="button secondary compact" data-reopen="${h(x.id)}">やり直す</button></li>`;
+  }
+  async function confirmItem(id) {
+    const pick=view.picks[id];if(!pick||!isFrameKey(pick.frame))return;
+    if(await sendCommand({type:'confirm',id,frame:pick.frame,candidate:pick.candidate||null,ruleFuture:!!pick.ruleFuture,rulePending:!!pick.rulePending})) {
+      delete view.picks[id];renderAll();toast('分類を確定して保存しました');
+    }
+  }
+  async function reopen(id) {
+    const hist=state.history[id];
+    if(await sendCommand({type:'reopen',id})){if(hist){view.queue=hist.kind;view.cursor[hist.kind]=id;}renderAll();toast('確認待ちに戻して保存しました');}
+  }
+  function moveReview(id) {
+    view.cursor[view.queue === 'purpose' ? 'purpose' : 'review'] = id;
+    renderReview();
+    const f = document.getElementById('review-focus');
+    if (f) f.focus({preventScroll: true});
+  }
+
+  /* ---------- 資産 ---------- */
+  function renderAssets() {
+    const series = assetSeries();
+    const latest = lastComplete(series);
+    let summary = '<h2 class="card-label">月末残高はまだ入力されていません</h2>';
+    if (latest) {
+      const prev = monthInfo(shiftMonth(latest.month, -1));
+      const d = prev.complete ? latest.total - prev.total : null;
+      summary = `<h2 class="card-label">${monthLabel(latest.month)}${latest.beforeEnd ? '（月末前）' : '末'}の合計</h2>`
+        + `<p class="big num">${yen(latest.total)}</p>`
+        + (d == null ? '' : `<p class="num ${assetTone(d)}">前月比 ${signedYen(d)}</p>`);
+    }
+    const legend = ACCOUNTS.map((a, i) => `<span><i style="background:${ACCOUNT_COLORS[i]}"></i>${h(a)}</span>`).join('') + '<span>棒の上は合計（万円）</span>';
+    const chartCard = `<section class="card chart-card" id="chart-card">${summary}<div class="chart-scroll" id="chart-scroll"></div><p class="legend">${legend}</p></section>`;
+    document.getElementById('page-assets').innerHTML = '<div class="page-head"><h1 tabindex="-1">資産</h1></div>'
+      + `<div class="assets-layout">${chartCard}${balanceForm()}${balanceTable(series)}</div>`;
+    updateBalanceNotes(false);
+    if (currentPage() === 'assets') drawChart();
+  }
+  function drawChart() {
+    const box = document.getElementById('chart-scroll');
+    if (!box || !box.clientWidth) return;
+    box.innerHTML = assetChart(assetSeries(), box.clientWidth);
+    box.scrollLeft = box.scrollWidth;
+  }
+  function niceStep(raw) {
+    if (!(raw > 0)) return 1;
+    const p = Math.pow(10, Math.floor(Math.log10(raw)));
+    const f = raw / p;
+    return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p;
+  }
+  function assetChart(series, width) {
+    if (!series.length) return '<p class="empty-note">月末残高を入力すると、ここに推移を表示します。</p>';
+    const n = series.length;
+    const padL = 50, padR = 10, padT = 44, padB = 32, H = 250;
+    const W = Math.max(Math.floor(width), padL + padR + 56 * n);
+    const slot = Math.min(110, (W - padL - padR) / n);
+    const left = padL + ((W - padL - padR) - slot * n) / 2;
+    const maxV = Math.max(1, ...series.map(s => s.total));
+    const step = niceStep(maxV / 4);
+    const top = Math.max(step, Math.ceil(maxV * 1.1 / step) * step);
+    const y = v => padT + (H - padT - padB) * (1 - v / top);
+    const bw = Math.min(44, slot * 0.56);
+    const label = '月末残高の推移：' + series.map(s => `${monthLabel(s.month)} ${s.any ? yen(s.total) + (s.provisional ? '（暫定）' : '') : '未入力'}`).join('、');
+    let out = `<svg class="asset-chart" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${h(label)}">`;
+    for (let v = 0; v <= top + 1; v += step) {
+      out += `<line x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}" stroke="#e3e8df" stroke-width="1"/>`
+        + `<text x="${padL - 8}" y="${y(v) + 4}" text-anchor="end">${man(v)}</text>`;
+    }
+    series.forEach((s, i) => {
+      const cx = left + slot * (i + 0.5);
+      const axis = i === 0 || s.month.slice(5) === '01' ? `${s.month.slice(2, 4)}/${+s.month.slice(5)}` : monthShort(s.month);
+      out += `<text x="${cx}" y="${H - padB + 20}" text-anchor="middle"${s.month === CUR ? ' class="axis-current"' : ''}>${axis}</text>`;
+      if (!s.any) {
+        out += `<rect x="${cx - bw / 2}" y="${y(0) - 40}" width="${bw}" height="40" rx="3" fill="none" stroke="#a3aaa5" stroke-dasharray="4 3"/>`
+          + `<text x="${cx}" y="${y(0) - 48}" text-anchor="middle" class="missing">未入力</text>`;
+        return;
+      }
+      let base = 0;
+      s.values.forEach((v, k) => {
+        if (!v) return;
+        const y0 = y(base), y1 = y(base + v);
+        out += `<rect x="${cx - bw / 2}" y="${y1}" width="${bw}" height="${Math.max(0, y0 - y1)}" fill="${ACCOUNT_COLORS[k]}"${s.provisional ? ' fill-opacity=".55"' : ''}><title>${h(monthLabel(s.month) + ' ' + ACCOUNTS[k] + ' ' + yen(v))}</title></rect>`;
+        base += v;
+      });
+      if (s.month === view.freshMonth) {
+        out += `<rect x="${cx - bw / 2 - 4}" y="${y(base) - 4}" width="${bw + 8}" height="${y(0) - y(base) + 4}" rx="4" fill="none" stroke="#1f2d29" stroke-width="1.5"/>`;
+      }
+      out += `<text x="${cx}" y="${y(base) - 9}" text-anchor="middle" class="total">${man(s.total)}</text>`;
+      if (s.provisional) out += `<text x="${cx}" y="${y(base) - 25}" text-anchor="middle" class="provisional">暫定</text>`;
+    });
+    return out + '</svg>';
+  }
+  function monthOptions() {
+    const set = new Set();
+    for (let k = 0; k < MONTH_CHOICES; k++) set.add(shiftMonth(CUR, -k));
+    state.assets.forEach(a => set.add(a.month));
+    set.add(view.assetMonth);
+    return Array.from(set).filter(m => m <= CUR).sort().reverse();
+  }
+  function balanceForm() {
+    const month = view.assetMonth;
+    const pending = new Set(pendingMonths().map(s => s.month));
+    const options = monthOptions().map(m => {
+      const suffix = m === CUR ? '（今月・月末前）' : pending.has(m) ? (monthInfo(m).any ? '（一部未入力）' : '（未入力）') : '';
+      return `<option value="${m}"${m === month ? ' selected' : ''}>${monthLabel(m)}末${suffix}</option>`;
+    }).join('');
+    const inputs = ACCOUNTS.map((acc, i) => {
+      const v = balanceOf(month, acc);
+      return `<div class="field"><label for="balance-${i}">${h(acc)}</label><div class="input-wrap"><input type="text" id="balance-${i}" name="balance-${i}" inputmode="numeric" autocomplete="off" enterkeyhint="done" placeholder="例：${i ? '560,000' : '350,000'}" value="${v == null ? '' : num(v)}" aria-describedby="balance-${i}-note"><span class="unit" aria-hidden="true">円</span></div><p class="field-note" id="balance-${i}-note"></p></div>`;
+    }).join('');
+    return `<form class="card balance-form" id="balance-form" novalidate>
+      <h2>月末残高を入力</h2>
+      <p class="small muted">わかる口座だけでも保存できます。</p>
+      <div class="field"><label for="asset-month">月</label><select id="asset-month" name="month">${options}</select></div>
+      ${inputs}
+      <div class="balance-preview"><span>合計</span><strong id="balance-total" class="num">—</strong></div>
+      <button type="submit" class="button wide">保存する</button>
+      <p class="form-error" id="balance-error" role="alert"></p>
+    </form>`;
+  }
+  function parseYen(raw) {
+    const s = String(raw || '')
+      .replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+      .replace(/[,，、\s円¥￥]/g, '');
+    if (!s) return {empty: true};
+    if (!/^\d{1,12}$/.test(s)) return {error: true};
+    return {value: parseInt(s, 10)};
+  }
+  function updateBalanceNotes(showErrors) {
+    const form = document.getElementById('balance-form');
+    if (!form) return;
+    const prevMonth = shiftMonth(form.elements.month.value, -1);
+    let total = 0, count = 0;
+    ACCOUNTS.forEach((acc, i) => {
+      const input = form.elements['balance-' + i];
+      const note = document.getElementById(`balance-${i}-note`);
+      const r = parseYen(input.value);
+      const pv = balanceOf(prevMonth, acc);
+      note.className = 'field-note';
+      input.removeAttribute('aria-invalid');
+      if (r.error) {
+        note.textContent = '数字で入力してください（例：351,000）';
+        if (showErrors || input.value.trim()) { note.className = 'field-note is-error'; input.setAttribute('aria-invalid', 'true'); }
+      } else if (r.empty) {
+        note.textContent = pv == null ? '' : `前月末 ${yen(pv)}`;
+      } else {
+        total += r.value; count++;
+        note.innerHTML = pv == null ? '' : `前月末から <span class="num ${assetTone(r.value - pv)}">${signedYen(r.value - pv)}</span>`;
+      }
+    });
+    document.getElementById('balance-total').textContent = count ? yen(total) + (count < ACCOUNTS.length ? '（暫定）' : '') : '—';
+  }
+  async function saveBalance(form) {
+    const month=form.elements.month.value,error=document.getElementById('balance-error');error.textContent='';
+    const results=ACCOUNTS.map((_,i)=>parseYen(form.elements['balance-'+i].value));
+    if(results.some(r=>r.error)||results.every(r=>r.empty)){error.textContent='少なくとも1つの口座の残高を数字で入力してください。';return;}
+    if(await sendCommand({type:'balances',month,balances:results.map(r=>r.empty?null:r.value)})){
+      view.assetMonth=month;view.freshMonth=month;renderAll();toast('月末残高を保存しました');
+    }
+  }
+  function balanceTable(series) {
+    if (!series.length) return '';
+    const rows = series.slice().reverse().map(s => {
+      const prev = monthInfo(shiftMonth(s.month, -1));
+      const d = s.complete && prev.complete ? s.total - prev.total : null;
+      return `<tr${s.month === view.freshMonth ? ' class="is-fresh"' : ''}>`
+        + `<th scope="row"><button type="button" class="table-month num" data-edit-month="${s.month}" aria-label="${monthLabel(s.month)}末の残高を修正">${s.month.replace('-', '/')}</button>${s.beforeEnd ? '<span class="row-tag">月末前</span>' : ''}</th>`
+        + s.values.map(v => `<td class="num">${v == null ? '<span class="muted">未入力</span>' : num(v)}</td>`).join('')
+        + `<td class="num"><strong>${s.any ? num(s.total) : '—'}</strong>${s.any && !s.complete ? '<span class="row-tag">暫定</span>' : ''}</td>`
+        + `<td class="num ${d == null ? 'is-flat' : assetTone(d)}">${d == null ? '—' : signedNum(d)}</td></tr>`;
+    }).join('');
+    return `<section class="card table-card" aria-labelledby="table-title">
+      <div class="table-head"><h2 id="table-title">月末残高の一覧</h2><span class="small muted">単位：円</span></div>
+      <div class="table-scroll"><table><thead><tr><th scope="col">月末</th>${ACCOUNTS.map(a => `<th scope="col" title="${h(a)}">${h(ACCOUNT_SHORT[a] || a)}</th>`).join('')}<th scope="col">合計</th><th scope="col">前月比</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="small muted table-note">年月を押すと、その月を修正できます。</p>
+    </section>`;
+  }
+
+  /* ---------- トースト・初期化 ---------- */
+  let toastTimer = null;
+  function toast(message,undoId=null) {
+    const el = document.getElementById('toast');
+    el.textContent = message;
+    if(undoId){const button=document.createElement('button');button.type='button';button.className='button secondary compact';button.dataset.categoryUndo=undoId;button.textContent='元に戻す';el.append(' ',button);}
+    el.style.pointerEvents=undoId?'auto':'none';
+    el.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.hidden = true; }, undoId ? 12000 : 4500);
+  }
+  /* ---------- 操作 ---------- */
+  document.addEventListener('click', e => {
+    // HTML Service uses base target=_top. App-only hash links must stay in this frame.
+    const link = e.target.closest('a[href^="#"]');
+    if (link && PAGES.includes(link.getAttribute('href').slice(1))) {
+      e.preventDefault();
+      if (!busy && state && !pendingRequest) goTo(link.getAttribute('href').slice(1));
+      return;
+    }
+    const b = e.target.closest('button');
+    if (!b || busy || !state || pendingRequest) return;
+    if (b.dataset.monthStep) {
+      const months = txMonths();
+      const next = months[months.indexOf(view.month) + Number(b.dataset.monthStep)];
+      if (!next) return;
+      view.month = next;
+      renderOverview();
+      if (!focusData('month-step', b.dataset.monthStep)) focusData('month-step', String(-Number(b.dataset.monthStep)));
+    } else if (b.hasAttribute('data-cat')) {
+      const key = b.dataset.cat;
+      view.openCats[key] = !view.openCats[key];
+      renderOverview();
+      focusData('cat', key);
+    } else if (b.dataset.tx) {
+      view.openTx[b.dataset.tx] = !view.openTx[b.dataset.tx];
+      renderOverview();
+      focusData('tx', b.dataset.tx);
+    } else if (b.dataset.categoryUndo) {
+      sendCommand({type:'undoCategory',id:b.dataset.categoryUndo}).then(ok=>{if(ok)toast('直前の訂正を戻しました');});
+    } else if (b.dataset.frameApply) {
+      const select = document.querySelector(`[data-frame-select="${CSS.escape(b.dataset.frameApply)}"]`);
+      if (select) changeFrame(b.dataset.frameApply, select.value);
+    } else if (b.dataset.gotoQueue) {
+      view.queue = b.dataset.gotoQueue;
+      if (b.dataset.gotoId) view.cursor[view.queue] = b.dataset.gotoId;
+      renderReview();
+      goTo('review');
+    } else if (b.dataset.queue) {
+      view.queue = b.dataset.queue;
+      renderReview();
+      focusData('queue', view.queue);
+    } else if (b.dataset.stepId) {
+      moveReview(b.dataset.stepId);
+    } else if (b.hasAttribute('data-skip')) {
+      const kind = view.queue === 'purpose' ? 'purpose' : 'review';
+      const queue = queueOf(kind);
+      const i = queue.findIndex(t => t.id === view.cursor[kind]);
+      scrollPageTop();
+      moveReview(queue[(i + 1) % queue.length].id);
+    } else if (b.dataset.reopen) {
+      reopen(b.dataset.reopen);
+    } else if (b.dataset.editMonth) {
+      view.assetMonth = b.dataset.editMonth;
+      renderAssets();
+      const form = document.getElementById('balance-form');
+      form.scrollIntoView({block: 'start'});
+      document.getElementById('asset-month').focus({preventScroll: true});
+
+    }
+  });
+  document.addEventListener('change', e => {
+    const target = e.target;
+    if(target.dataset.frameSelect){changeFrame(target.dataset.frameSelect,target.value);return;}
+    const form = target.closest('#review-form');
+    if (form) {
+      const pick = view.picks[form.dataset.id];
+      if (!pick) return;
+      if (target.name === 'candidate' || target.name === 'frame') pick[target.name] = target.value;
+      else if (target.name === 'rule-future') pick.ruleFuture = target.checked;
+      else if (target.name === 'rule-pending') pick.rulePending = target.checked;
+      updateReviewState();
+    } else if (target.id === 'asset-month') {
+      view.assetMonth = target.value;
+      renderAssets();
+      document.getElementById('asset-month').focus();
+    }
+  });
+  document.addEventListener('input', e => {
+    if (e.target.closest('#balance-form') && /^balance-/.test(e.target.name || '')) {
+      document.getElementById('balance-error').textContent = '';
+      updateBalanceNotes(false);
+    } else if (e.target.id === 'big-threshold') {
+      document.getElementById('settings-error').textContent = '';
+    }
+  });
+  document.addEventListener('submit', e => {
+    e.preventDefault();
+    if(e.target.dataset.ownerNote){saveOwnerNote(e.target);return;}
+    if (e.target.id === 'review-form') confirmItem(e.target.dataset.id);
+    else if (e.target.id === 'balance-form') saveBalance(e.target);
+    else if (e.target.id === 'settings-form') saveSettings(e.target);
+  });
+  document.addEventListener('toggle', e => {
+    if (!e.target.classList) return;
+    if(e.target.id==='csv-card'){csvOpen=e.target.open;return;}
+    if (e.target.classList.contains('done-card')) view.doneOpen = e.target.open;
+    else if (e.target.classList.contains('settings-card')) view.settingsOpen = e.target.open;
+  }, true);
+  window.addEventListener('hashchange', () => {
+    if(!state)return;
+    document.getElementById('toast').hidden = true;
+    if (currentPage() === 'assets') { view.assetMonth = defaultAssetMonth(); renderAssets(); }
+    showPage(true);
+  });
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    if(!state)return;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => { if (currentPage() === 'assets') drawChart(); }, 150);
+  });
+
+
+  /* ---------- CSV: identity header discarded locally, then preview and explicit commit ---------- */
+  let classificationText='',classificationReport=null,classificationRevision=null;
+  function renderMailStatus(){
+    const panel=document.getElementById('mail-status-panel');
+    const sources=state.mail_sources||[],held=sources.filter(e=>e.event_status==='held');
+    const blocked=sources.filter(e=>e.event_status==='blocked').length;
+    const errors=sources.filter(e=>['quarantined','parse_error'].includes(e.event_status)).length;
+    if(!sources.length){panel.innerHTML='';return;}
+    panel.innerHTML=`<details class="card settings-card"><summary>利用通知の状態（全期間）</summary><div style="padding:16px"><p>照合保留 ${held.length}件／利用不可 ${blocked}件／読取り・認証未確認 ${errors}件</p><p class="note">照合保留は、既存の購入と同じか確認できるまで支出に追加していません。カテゴリの暫定分類とは別です。利用不可の通知は支出に含みません。</p>${held.length?`<ul>${held.slice(0,20).map(e=>`<li>${h(e.used_at||'利用日不明')} ${h(e.merchant_raw||'店舗不明')} ${h(typeof e.amount_jpy==='number'?yen(e.amount_jpy):'円額未確定')} — 購入対応の照合待ち</li>`).join('')}</ul>`:''}</div></details>`;
+  }
+  function renderClassification(){
+    document.getElementById('classification-panel').innerHTML=`<details class="card settings-card"><summary>メール照合・分類結果の受渡し</summary><div style="padding:16px"><p>分類待ちを取得し、照合担当へ渡します。結果は保存前に確認できます。この画面自体はメールを検索しません。</p><button type="button" class="button secondary" id="classification-export">分類待ちJSONを取得</button><textarea id="classification-pending" readonly aria-label="分類待ちJSON" style="width:100%;height:90px"></textarea><label>結果JSON<textarea id="classification-input" style="width:100%;height:120px">${h(classificationText)}</textarea></label><button type="button" class="button secondary" id="classification-preview">分類結果を確認</button><p role="status" id="classification-report"></p><button type="button" class="button" id="classification-save" disabled>確認した分類結果を保存</button></div></details>`;
+  }
+  document.addEventListener('input',e=>{if(e.target.id==='classification-input'){classificationText=e.target.value;classificationReport=null;document.getElementById('classification-save').disabled=true;}});
+  document.addEventListener('click',async e=>{
+    const b=e.target.closest('button');if(!b||busy)return;
+    if(b.id==='classification-save'){
+      if(!classificationReport||classificationRevision!==revision){showWarning('台帳が更新されています。分類結果を再確認してください。');return;}
+      if(await sendCommand({type:'applyClassification',classificationFile:classificationText})){classificationReport=null;classificationText='';renderClassification();toast('分類結果を保存しました');}return;
+    }
+    if(!['classification-export','classification-preview'].includes(b.id))return;
+    setBusy(true);
+    try{
+      if(b.id==='classification-export'){const r=await rpc('classificationPending');document.getElementById('classification-pending').value=JSON.stringify(r.pending,null,2);}
+      else {const r=await rpc('previewClassification',classificationText);classificationReport=r.report;classificationRevision=r.revision;document.getElementById('classification-report').textContent=`自動分類 ${r.report.auto}件／暫定 ${r.report.provisional||0}件／要確認 ${r.report.review}件／版不一致 ${r.report.stale}件／対象外 ${r.report.skipped}件／分割 ${r.report.split}件`+(r.report.replayed?'（保存済みの結果）':'');document.getElementById('classification-save').disabled=r.report.replayed||r.revision!==revision||!(r.report.auto+r.report.review+(r.report.provisional||0));}
+    }catch(e){classificationReport=null;document.getElementById('classification-save').disabled=true;document.getElementById('classification-report').textContent='確認で停止しました。保存していません。'+String(e.message||e);}
+    finally{setBusy(false);}
+  });
+  let csvSelected=[],csvMeta=[],csvPrepared=null,csvPreview=null,csvOpen=false,csvError='';
+  function renderCsv(){
+    const c=state.csv||{imports:[],bills:[]},pending=c.bills.filter(b=>b.status==='unresolved');
+    const list=csvSelected.map((f,i)=>`<div style="margin:12px 0"><span>${h(f.name)}</span><br><label>CSV${i+1}のカード <select style="max-width:100%;width:100%" data-csv-card="${i}" aria-label="CSV${i+1}のカード"><option value="olive"${csvMeta[i]?.card==='olive'?' selected':''}>Olive</option><option value="amazon_master"${csvMeta[i]?.card==='amazon_master'?' selected':''}>Amazonマスター</option></select></label> <label>請求月 <input style="max-width:100%" type="month" data-csv-month="${i}" aria-label="CSV${i+1}の請求月" value="${h(csvMeta[i]?.billing_month||'')}" required></label></div>`).join('');
+    const preview=csvPreview?`<p>新たに購入計上 ${csvPreview.created}件／通知と照合 ${csvPreview.linked}件／購入対応の確認待ち ${csvPreview.unresolved}件／取込済み ${csvPreview.skipped}ファイル</p>${csvPreview.unmatched_notifications.length?`<p>このCSVの利用期間にある未照合の通知候補 ${csvPreview.unmatched_notifications.length}件。取消や欠落とは断定せず、別途確認します。</p>`:""}<ul>${csvPreview.files.map(f=>`<li>${h(CARD_LABEL[f.card])} ${h(f.billing_month)}：${f.status==='already_imported'?'取込済み':`${f.row_count}行・利用期間 ${h(f.period_start)}〜${h(f.period_end)}・今回請求 ${yen(f.billed_total)}${f.missing_total?'（合計行なし）':''}`}</li>`).join('')}</ul><p>購入日は全額を1回だけ計上し、今回請求は月別に別保存します。購入対応の確認待ちからの追加計上は保留します。同じ購入への対応付けなら支出は増えません。</p><button type="button" id="csv-commit" class="button"${csvPreview.files.every(f=>f.status==='already_imported')?' disabled':''}>この内容で取り込む</button>`:'';
+    const unresolved=pending.slice(0,20).map(b=>`<div style="margin:16px 0"><p><strong>${h(b.merchant_raw)}</strong> ${h(b.used_at)} 購入額 ${yen(b.amount_jpy)}／${h(b.billing_month)}請求 ${yen(b.billed_jpy)}（支払回数 ${h(b.payment_total_raw)}・今回 ${h(b.payment_index_raw)}）</p><label>同じ購入かを選択 <select style="max-width:100%;width:100%" data-csv-choice="${h(b.id)}"><option value="">選んでください</option>${b.candidate_purchase_ids.map(id=>{const t=state.transactions.find(x=>x.id===id);return t?`<option value="${h(id)}">${h(t.used_at.slice(0,10))} ${h(t.merchant_raw)} ${amountText(t)}${t.csv_origin?`（${h(t.csv_origin.billing_month)}請求・行${t.csv_origin.row_number}）`:""}</option>`:'';}).join('')}<option value="__new__">別の購入として全額を1回計上</option></select></label> <button type="button" class="button secondary" data-csv-resolve="${h(b.id)}">購入対応を保存</button></div>`).join('');
+    document.getElementById('csv-panel').innerHTML=`<details class="card settings-card" id="csv-card"${csvOpen?' open':''}><summary>CSV取込・月別請求${pending.length?`（購入対応の確認 ${pending.length}件・追加計上を保留）`:''}</summary><div style="padding:16px;overflow-wrap:anywhere"><p>Shift_JIS（CP932）の7列明細。先頭の氏名等3項目のヘッダーは端末内で除外し、送信・保存しません。カードと請求月を各ファイルに指定してください。</p><label>CSVファイル（複数可） <input style="max-width:100%;width:100%" type="file" id="csv-files" accept=".csv" multiple></label>${list}<button type="button" id="csv-preview" class="button secondary"${csvSelected.length?'':' disabled'}>保存前に確認</button><p role="alert" id="csv-error">${h(csvError)}</p>${preview}<hr><p>取込済み ${c.imports.length}ファイル／請求記録 ${c.bills.length}行。${pending.length?`購入対応未確定 ${pending.length}件。未確定の請求行からの追加計上は保留しています。同じ購入への対応付けなら支出は増えません。`:''}</p>${unresolved}${pending.length>20?'<p>先頭20件を表示しています。確定すると次の候補が表示されます。</p>':''}</div></details>`;
+    renderCsv13();
+  }
+  let csv13Input=null,csv13Result=null,csv13Checked=null;
+  function renderCsv13(){
+    let panel=document.getElementById('csv13-panel');if(!panel){panel=document.createElement('div');panel.id='csv13-panel';document.getElementById('csv-panel').after(panel);}
+    const saved=(state.csv13_stage?.families||[]).map(f=>`<li>${h(CARD_LABEL[f.card])} ${h(f.billing_month)}：記載額計 ${yen(f.summary.known_billed_total)}／請求額空欄 ${f.summary.missing_billed_count}件／購入対応保留 ${f.summary.review_count}件</li>`).join('');
+    const rows=csv13Result?.review.rows||[];
+    panel.innerHTML=`<details class="card settings-card"><summary>13列CSV・購入対応の確認</summary><div style="padding:16px"><p>確認した新規購入だけ追加し、既存取引には対応付けます。請求空欄は金額不明のまま保持します。既存の分類・本人メモは変わりません。</p><label>カード<select id="csv13-card"><option value="olive"${csv13Input?.card!=='amazon_master'?' selected':''}>Olive</option><option value="amazon_master"${csv13Input?.card==='amazon_master'?' selected':''}>Amazonマスター</option></select></label><input type="file" id="csv13-file" accept=".csv"><button class="button secondary" id="csv13-preview">保存前に確認</button><p id="csv13-status" role="status"></p>${csv13Result?`<p>${h(CARD_LABEL[csv13Input.card])}・請求月 ${h(csv13Input.file.billing_month)}／${rows.length}行。候補は未確定です。同一購入と確認できた行だけ選択してください。空欄のまま保留保存もできます。</p>`:''}<label><input type="checkbox" id="csv13-auto-strict" checked>カード・利用日・金額・店舗名が一意に一致する行は対応付ける</label><label><input type="checkbox" id="csv13-jpy-verified">利用記載額が円額／円相当額であると確認した</label>${rows.map(r=>`<label style="display:block;margin:12px 0">${h(r.source.used_at)} ${h(r.source.merchant_raw)} 利用記載額 ${h(r.source.usage_amount_reported)}／請求 ${r.source.billed_jpy==null?'記載なし':yen(r.source.billed_jpy)}<select style="width:100%" data-csv13-row="${r.row_number}"><option value="">対応未確定のまま保留</option>${r.candidate_purchase_ids.map(id=>{const t=state.transactions.find(t=>t.id===id);return `<option value="${h(id)}">${h(t.used_at)} ${h(t.merchant_raw)} ${h(amountText(t))}</option>${r.source.currency_raw&&t.amount_foreign!==null?`<option value="value#${h(id)}">同じ購入として対応付け、CSVの円相当額を採用：${h(t.merchant_raw)}</option>`:''}`;}).join('')}${r.candidate_purchase_ids.length?'':'<option value="__new__">既存と重複しない新しい購入として追加</option>'}</select><select data-csv13-category="${r.row_number}" style="width:100%">${['食費','生活用品','住まい・固定費','交通','趣味・娯楽','学業・仕事','医療','その他'].map(cat=>`<option${cat==='その他'?' selected':''}>${cat}</option>`).join('')}</select></label>`).join('')}${csv13Result?'<button class="button secondary" id="csv13-check">この判断で変更内容を確認</button><button class="button" id="csv13-save" disabled>確認した変更を保存</button>':''}<ul>${saved}</ul><p>保存済みの保留は同じCSVを再選択して解消できます。候補がある行は新規追加せず、対応未確定のまま保持できます。</p></div></details>`;
+  }
+  document.addEventListener('click',async e=>{
+    const b=e.target.closest('button');if(!b||!['csv13-preview','csv13-check','csv13-save'].includes(b.id)||busy||!state||pendingRequest)return;
+    try{
+      if(b.id==='csv13-preview'){
+        const f=document.getElementById('csv13-file').files[0],card=document.getElementById('csv13-card').value;if(!f||f.size>2000000)throw Error('CSV13_FILE_REQUIRED');
+        const text=new TextDecoder('shift_jis',{fatal:true}).decode(await f.arrayBuffer());
+        csv13Checked=null;csv13Input={run_id:'csv13-'+Date.now()+'-'+Math.random().toString(36).slice(2),card,file:KakeiboCsv13.parse(text,KakeiboCsv.tokenize),resolutions:{}};
+        setBusy(true);csv13Result=await rpc('previewCsv13',csv13Input);if(csv13Result.revision!==revision)throw Error('CONFLICT');renderCsv13();
+      }else{
+        if(!csv13Input||!csv13Result||csv13Result.revision!==revision)throw Error('CONFLICT');
+        if(b.id==='csv13-check'){
+          const resolutions={},verified=document.getElementById('csv13-jpy-verified').checked;
+          document.querySelectorAll('[data-csv13-row]').forEach(x=>{if(!x.value)return;const n=x.dataset.csv13Row;
+            if(x.value==='__new__'||x.value.startsWith('value#')){if(!verified)throw Error('CSV13_JPY_CONFIRM_REQUIRED');const basis={amount_basis:'verified_csv_usage_jpy',evidence_ref:'owner-reviewed-csv-column7'};
+              resolutions[n]=x.value==='__new__'?{kind:'create',reviewed_new:true,category:document.querySelector(`[data-csv13-category="${n}"]`).value,...basis}:{kind:'link',purchase_id:x.value.slice(6),use_csv_jpy:true,...basis};
+            }else resolutions[n]={kind:'link',purchase_id:x.value};});
+          const input={...csv13Input,resolutions,auto_link_strict:document.getElementById('csv13-auto-strict').checked};setBusy(true);const check=await rpc('previewCsv13',input);if(check.revision!==revision)throw Error('CONFLICT');
+          csv13Checked={input,revision:check.revision};document.getElementById('csv13-status').textContent=`新規購入 ${check.report.created}件／対応付け ${check.report.linked}件／円額更新 ${check.report.valued}件／支出変化 ${yen(check.report.expense_delta_jpy)}。請求空欄は空欄のままです。`;
+          document.getElementById('csv13-save').disabled=false;
+        }else{
+          if(!csv13Checked||csv13Checked.revision!==revision)throw Error('CONFLICT');
+          if(await sendCommand({type:'stageCsv13',csv13Input:csv13Checked.input})){csv13Input=null;csv13Result=null;csv13Checked=null;renderCsv13();toast('CSVの購入と購入対応を保存しました');}
+        }
+      }
+    }catch(err){const p=document.getElementById('csv13-status');if(p)p.textContent='保存前の確認で停止しました。再読み込みして確認してください。';}
+    finally{setBusy(false);}
+  });
+  document.addEventListener('change',e=>{if(e.target.closest('#csv13-panel')){if(['csv13-card','csv13-file'].includes(e.target.id)){csv13Input=null;csv13Result=null;const check=document.getElementById('csv13-check');if(check)check.disabled=true;}csv13Checked=null;const save=document.getElementById('csv13-save');if(save)save.disabled=true;}});
+  async function previewCsv(){
+    if(busy||!state||pendingRequest)return;
+    try{
+      csvPrepared=[];
+      for(let i=0;i<csvSelected.length;i++){
+        const f=csvSelected[i];if(f.size>2000000)throw Error('CSV_FILE_TOO_LARGE');
+        const bytes=new Uint8Array(await f.arrayBuffer());if((bytes[0]===239&&bytes[1]===187&&bytes[2]===191)||bytes[0]===255||bytes[0]===254)throw Error('CSV_ENCODING_EXPECT_SHIFT_JIS');
+        const text=new TextDecoder('shift_jis',{fatal:true}).decode(bytes);
+        csvPrepared.push(KakeiboCsv.parse(text,csvMeta[i].card,csvMeta[i].billing_month));
+      }
+      if(JSON.stringify(csvPrepared).length>500000)throw Error('CSV_REQUEST_TOO_LARGE');
+      setBusy(true);const r=await rpc('previewCsvImport',csvPrepared);
+      if(!r||r.ok!==true||r.revision!==revision)throw Error('CSV_PREVIEW_CONFLICT_RELOAD');
+      csvPreview=r.report;csvError='';csvOpen=true;renderCsv();
+    }catch(e){csvPrepared=null;csvPreview=null;const code=(String(e.message||e).match(/CSV_[A-Z0-9_]+/)||['接続または形式'])[0];csvError='取込前の確認で停止しました（'+code+'）。保存はしていません。カード・請求月・元のファイル形式や合計を確認してください。';renderCsv();}
+    finally{setBusy(false);}
+  }
+  document.addEventListener('change',e=>{
+    if(e.target.id==='csv-files'){csvSelected=Array.from(e.target.files);csvMeta=csvSelected.map(()=>({card:'olive',billing_month:''}));csvPrepared=null;csvPreview=null;csvError='';csvOpen=true;renderCsv();}
+    else if(e.target.hasAttribute('data-csv-card')||e.target.hasAttribute('data-csv-month')){const i=Number(e.target.dataset.csvCard??e.target.dataset.csvMonth);if(e.target.hasAttribute('data-csv-card'))csvMeta[i].card=e.target.value;else csvMeta[i].billing_month=e.target.value;csvPrepared=null;csvPreview=null;const p=document.getElementById('csv-commit');if(p)p.disabled=true;}
+  });
+  document.addEventListener('click',async e=>{
+    const b=e.target.closest('button');if(!b||busy||!state||pendingRequest)return;
+    if(b.id==='csv-preview')await previewCsv();
+    else if(b.id==='csv-commit'&&csvPrepared&&csvPreview){if(await sendCommand({type:'importCsv',files:csvPrepared})){csvSelected=[];csvMeta=[];csvPrepared=null;csvPreview=null;csvError='';renderCsv();toast('CSV取込を保存しました');}}
+    else if(b.dataset.csvResolve){const choice=document.querySelector(`[data-csv-choice="${CSS.escape(b.dataset.csvResolve)}"]`);if(!choice.value){csvError='同じ購入かを選んでください。';document.getElementById('csv-error').textContent=csvError;return;}if(await sendCommand({type:'resolveCsvBill',billId:b.dataset.csvResolve,purchaseId:choice.value}))toast('購入対応を保存しました');}
+  });
+
+  refreshCloud();
+})();
+</script>
+</body>
+</html>

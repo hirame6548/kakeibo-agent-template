@@ -1,0 +1,12 @@
+const test=require('node:test'),assert=require('node:assert/strict');
+const Csv=require('../Csv'),New=require('../Csv13');
+const row=()=>['2098/10/03','架空店舗','ご本人','1回払い','',"'98/11",'3300','3300','','','','',''];
+const encode=rows=>rows.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\r\n');
+const parse=rs=>New.parse(encode(rs),Csv.tokenize);
+test('13 columns separate usage date, statement month and listed billing',()=>{const f=parse([row()]);assert.equal(f.billing_month,'2098-11');assert.equal(f.rows[0].used_at,'2098-10-03');assert.equal(f.summary.billed_total,3300);assert.equal(f.persistence_ready,false);assert.ok(!JSON.stringify(f).includes('ご本人'));});
+test('foreign missing billing remains null without conversion or zero substitution',()=>{const r=row();r[6]='3610';r[7]='';r.splice(9,4,'22.00','USD','164.042','10/04');const f=parse([r,row()]);assert.equal(f.rows[0].billed_jpy,null);assert.equal(f.rows[0].usage_amount_reported,3610);assert.equal(f.rows[0].foreign_amount_raw,'22.00');assert.equal(f.summary.known_billed_total,3300);assert.equal(f.summary.missing_billed_count,1);assert.equal(f.summary.billed_total,null);});
+test('duplicate rows preserved and explicit zero differs from missing',()=>{const r=row();r[7]='0';const f=parse([r,r]);assert.equal(f.rows.length,2);assert.equal(f.summary.billed_total,0);assert.equal(f.summary.missing_billed_count,0);});
+test('identity preamble discarded locally',()=>{const f=parse([['架空氏名','TEST-CARD','架空カード'],row()]);assert.equal(f.rows[0].row_number,2);assert.ok(!JSON.stringify(f).includes('TEST-CARD'));});
+test('unverified payment, identity role and nonempty unknown columns stop',()=>{for(const [i,v]of [[2,'架空個人'],[3,'2回払い'],[4,'1'],[8,'未確認']]){const r=row();r[i]=v;assert.throws(()=>parse([r]),/CSV13_UNSUPPORTED/);}});
+test('malformed dates, money, mixed months and partial foreign metadata stop',()=>{for(const [i,v]of [[0,'2098/02/30'],[6,'3.50'],[7,'不明'],[9,'22.00']]){const r=row();r[i]=v;assert.throws(()=>parse([r]),/CSV13_/);}const r=row();r[5]="'98/12";assert.throws(()=>parse([row(),r]),/MIXED_BILLING_MONTH/);});
+test('analysis profile cannot enter legacy persistence; old seven-column still parses',()=>{assert.throws(()=>Csv.validateFile(parse([row()])),/CSV_INVALID_SHAPE/);const old=Csv.parse('2098/10/03,架空店舗,3300,1,1,3300,','olive','2098-11');assert.equal(old.profile,'smbc-7-v1');assert.equal(old.rows[0].billed_jpy,3300);});

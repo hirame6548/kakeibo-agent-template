@@ -1,0 +1,13 @@
+.git/
+.env*
+*.eml
+*.raw
+*.b64url
+credentials*
+*token*
+local/
+private/
+config/*.local.json
+webapp/build/
+__pycache__/
+*.pyc

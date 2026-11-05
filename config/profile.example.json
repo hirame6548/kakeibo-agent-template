@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "profile": "google-smbc-v1",
+  "ledger_mode": "demo",
+  "owner_email": "owner@example.invalid",
+  "ledger_spreadsheet_id": "REPLACE_WITH_YOUR_EMPTY_SHEET_ID",
+  "mail_inbox_folder_id": "REPLACE_WITH_YOUR_PRIVATE_INBOX_ID",
+  "mail_inbox_parent_id": "REPLACE_WITH_YOUR_PRIVATE_PARENT_ID",
+  "mailbox_aliases": [
+    "mailbox-A"
+  ],
+  "accounts": [
+    "Account A"
+  ],
+  "classification_policy": {
+    "unknown": "provisional",
+    "merchant_rules": []
+  }
+}
